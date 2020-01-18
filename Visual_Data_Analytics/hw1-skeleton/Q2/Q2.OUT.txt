@@ -1,0 +1,141 @@
+parts   sets    themes
+~~~~~
+1
+1
+1
+~~~~~
+parts_index   sets_index    themes_index
+~~~~~
+0,id,INTEGER,0,,0
+1,name,TEXT,0,,0
+~~~~~
+count
+40
+~~~~~
+theme,num_sets
+Books,92
+Service Packs,57
+Star Wars,49
+LEGO Brand Store,35
+Bulk Bricks,30
+Fabuland,27
+~~~~~
+theme,percentage
+Agents,0.76
+Architecture,3.62
+Avatar,0.19
+Boat,1.52
+Books,17.52
+Bulk Bricks,5.71
+Cars,1.52
+Castle,1.71
+Clikits,3.24
+Collectible Minifigures,2.10
+Discovery,0.38
+Disney's Mickey Mouse,0.57
+Exo-Force,2.10
+Fabuland,5.14
+Jurassic World,1.90
+LEGO Brand Store,6.67
+LEGO Exclusive,1.52
+LEGO Ideas and CUUSOO,1.71
+Legends of Chima,3.62
+Minecraft,2.10
+Overwatch,0.57
+Power Functions,1.14
+Primo,0.95
+Racers,0.57
+Scala,4.00
+Service Packs,10.86
+SpongeBob SquarePants,0.76
+Sports,0.19
+Star Wars,9.33
+Studios,3.24
+The Powerpuff Girls,0.19
+Train,0.57
+Universe,0.19
+Vikings,0.19
+X-Pod,2.48
+Znap,1.14
+~~~~~
+sub_theme,num_sets
+Creator 3-in-1,58
+Supplemental,47
+Christmas,41
+Monthly Mini Model Build,36
+Police,36
+Soccer,30
+Creator,29
+Fire,28
+Construction,27
+Basic Model,26
+Traffic,26
+Game,23
+Clikits,17
+Fairy-Tale,15
+Friends,15
+Hospital,15
+Playhouse,15
+Airport,14
+Recreation,14
+4.5V,13
+Pirates,13
+Race,13
+Early Creator,11
+Orient Expedition,11
+Power Racers,11
+Harbor,10
+My Own Train,10
+Bob the Builder,9
+Extreme Team,9
+Thomas & Friends,9
+Riding Cycle,8
+The LEGO Movie Series II,8
+Futuron,7
+Lion Knights,7
+Model,7
+Series 4 Minifigures,7
+Space Port,7
+Star Wars,7
+Star Wars Rogue One,7
+Technic,7
+Winnie the Pooh,7
+Creator Expert,6
+Ice Planet 2002,6
+Paradisa,6
+Rattles,6
+Series 5 Minifigures,6
+Series 8 Minifigures,6
+Vahki,6
+~~~~~
+0,rowid,INTEGER,0,,0
+1,year,INTEGER,0,,0
+2,sets_count,,0,,0
+0
+~~~~~
+year,running_total
+1980,360
+1981,383
+1982,404
+1983,423
+1984,452
+1985,511
+1986,561
+1987,631
+1988,658
+1989,698
+~~~~~
+0,part_num,,0,,0
+1,name,,0,,0
+2,part_cat_id,,0,,0
+3,part_material_id,,0,,0
+~~~~~
+count_overview
+2687
+~~~~~
+total_boy_minidoll
+11
+~~~~~
+total_girl_minidoll
+83
+~~~~~

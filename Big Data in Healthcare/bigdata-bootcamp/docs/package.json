@@ -1,0 +1,14 @@
+{
+  "name": "CSE6250",
+  "version": "0.1.0",
+  "homepage": "http://sunlab.org",
+  "scripts": {
+    "start": "yarn dev",
+    "dev": "vuepress dev",
+    "build": "vuepress build",
+    "eject": "vuepress eject"
+  },
+  "devDependencies": {
+    "vuepress": "^0.9.0"
+  }
+}

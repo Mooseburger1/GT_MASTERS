@@ -1,0 +1,98 @@
+title: CSE 6250 Big Data for Healthcare
+description: Georgia Tech Big Data Bootcamp training material
+ga: 'UA-112385497-1'
+base: '/teaching/cse6250/fall2019/'
+head:
+- - meta
+  - name: apple-mobile-web-app-capable
+    content: 'yes'
+- - meta
+  - name: apple-mobile-web-app-status-bar-style
+    content: black
+- - meta
+  - name: msapplication-TileColor
+    content: "#000000"
+markdown:
+  anchor:
+    permalink: true
+  toc:
+    includeLevel:
+      - 2
+  # lineNumbers: false
+themeConfig:
+  nav:
+  # - text: About
+  #   link: /about
+  - text: Schedule
+    link: /schedule
+  - text: Lab
+    link: /env/
+  - text: Homework
+    link: /homework
+  - text: Data
+    link: /data
+  - text: Project
+    link: /project
+  - text: Resource
+    link: /resource
+  - text: Contact
+    link: /contact
+  - text: Sunlab
+    link: http://sunlab.org
+  # - text: CSE 6250
+  #   link: http://sunlab.org/teaching/cse6250/fall2019
+  sidebar:
+    # - "/about"
+    - title: Environment
+      collapsable: true
+      children:
+        - "/env/"
+        - "/env/env-local-docker.html"
+        - "/env/env-local-docker-linux.html"
+        - "/env/env-local-docker-macos.html"
+        - "/env/env-local-docker-windows.html"
+        - "/env/env-azure-docker.html"
+        - "/env/env-docker-compose.html"
+      # - "/env/env-aws-docker.html"
+    - title: Hadoop Ecosystem
+      collapsable: true
+      children:
+        - "/hadoop/hdfs-basic.html"
+        - "/hadoop/mapreduce-basic.html"
+        - "/hadoop/hadoop-hbase.html"
+        - "/hadoop/hadoop-streaming.html"
+        - "/hadoop/hadoop-hive.html"
+        - "/hadoop/hadoop-pig.html"
+    - title: Spark Ecosystem
+      collapsable: true
+      children:
+        - "/spark/spark.html"
+        - "/spark/scala-basic.html"
+        - "/spark/scala-intro.html"
+        - "/spark/spark-basic.html"
+        - "/spark/spark-sql.html"
+        - "/spark/spark-application.html"
+        - "/spark/spark-mllib.html"
+        - "/spark/spark-graphx.html"
+        - "/spark/zeppelin-intro.html"
+        - "/spark/zeppelin-tutorial.html"
+    - title: NLP
+      collapsable: true
+      children:
+        - "/nlp/solr.html"
+    - title: Deep Learning for Healthcare Applications
+      collapsable: true
+      children:
+        - "/dl/dl-setup.html"
+        - "/dl/dl-intro.html"
+        - "/dl/dl-start.html"
+        - "/dl/dl-fnn.html"
+        - "/dl/dl-cnn.html"
+        - "/dl/dl-rnn.html"
+
+  lastUpdated: 'Last Updated' # string | boolean
+configureWebpack:
+  resolve:
+    alias:
+      "@images": '/teaching/cse6250/fall2019/images'
+

@@ -1,0 +1,14 @@
+training/
+private/
+#data/
+derby.log
+metastore_db
+#spark
+web/deploy.sh
+
+#### joe made this: https://goel.io/joe
+
+#####=== Vagrant ===#####
+.vagrant/
+
+.DS_Store

@@ -1,0 +1,17 @@
+.ipynb_checkpoints
+
+/*/**/*.csv
+/*/**/part-r*
+/*/**/.part-r*
+/*/**/*.log
+/*/**/*.crc
+/*/**/part*
+/*/**/0000*
+/*/**/.000*
+
+*/homework2/code/pig/aliveevents/part-r-00000
+*/homework3/code/data/encounter_INPUT.csv
+*/homework3/code/data/lab_results_INPUT.csv
+*/homework2/code/pig/filtered/part-r-00000
+*/homework1/homework1/data/train/events.csv
+*/homework2/data/events.csv

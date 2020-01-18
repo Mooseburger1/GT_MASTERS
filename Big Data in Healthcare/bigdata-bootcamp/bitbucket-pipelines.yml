@@ -1,0 +1,31 @@
+# This is a sample build configuration for JavaScript.
+# Check our guides at https://confluence.atlassian.com/x/14UWN for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: yuikns/yarn:10
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - node
+        script:
+          - cd docs
+          - yarn install
+          - yarn build
+          - ls -al .vuepress/dist/
+          - test -f .vuepress/dist/index.html
+  branches:
+    fall2019:
+      - step:
+          script:
+            - node -v
+            - yarn -v
+            - cd docs
+            - pwd
+            - yarn install
+            - yarn build
+            - ls -al .vuepress/dist
+            - test -f .vuepress/dist/index.html
+            - rsync -avzh --delete .vuepress/dist/ $CI_USER@sunlab.org:$SITE_BASE/teaching/cse6250/fall2019/
