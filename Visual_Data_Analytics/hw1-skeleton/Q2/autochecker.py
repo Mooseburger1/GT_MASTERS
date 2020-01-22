@@ -352,8 +352,14 @@ def evaluate():
         submitted_output_new.append('theme,percentage')
         for i in range(len(submitted_output[6])-1):
             submitted_output_new.append(str(hashlib.sha256(submitted_output[6][i+1].split(",")[0].encode()).hexdigest()) + "," + str(hashlib.sha256(submitted_output[6][i+1].split(",")[1].encode()).hexdigest()))
-        print(submitted_output_new)
-        if submitted_output_new != desired_output[6]:
+        desired_output_new = ['theme,percentage', 
+'6e317bcd6839e8877395411b47b2b89d2bae7ccb05f78cee32bcdf76b5294265,de5ebb51c1398b41d5aad54105940c02eab78523158cbaa867e41d30ee3f776f', 
+'86ac6ab7840c79379d8770ff849017aad9020fed1812a62734660ed7f76824ab,944bccb2c957f754a01120e3a7921213d4327b3c0070daa39a42035d8dae5c5e', 
+'6efced6a7e04d1137ae7e833b91a4b7660fc985091525eae5bf656819a7f31f9,e0b04046fbfbc96f3437e4718a8a15e7eb5936298a36a8c2039226d1c5f41845', 
+'1d2842862c1e5f87900e0b87b3efc8b6abf5d18899e254414649d55fe39f2d46,de2eb6439cf3d842edb9eb123b56afb638e27ede347c86429389c554f0c41b1e', 
+'2d65828f5a6b97dd0dde7a95c9d32ba210a4f110a5068532923efc6d10f7088b,ad5482cf6941dccd38150c2fe806cf771809d813996b683b2b44559bf39d136b', 
+'057af45fb43ee158f7738eae864cde11b42b6ec6adf0df12d30e25fa32e34a92,16a29e295c5e00bc00f65e7485fd9388b550fc6e5ef22cb51e6ae1b62a3adfcd']
+        if submitted_output_new != desired_output[6] and submitted_output_new != desired_output_new:
             part_points = 0
             part_comments = list()
 
@@ -407,9 +413,8 @@ def evaluate():
             
             subtheme_counts = {k: v for k, v in (s.split(',') for s in desired_output[7][1:])}
             subtheme_names = list(subtheme_counts.keys())
-            
             try:
-                submitted_counts = {k: v for k, v in (s.split(',') for s in submitted_output[7][1:])}
+                submitted_counts = {k: v for k, v in (s.split(',') for s in submitted_output_new[1:])}
             except:
                 deduction += 4.0
                 part_comments.append('incorrect format')
@@ -514,7 +519,12 @@ def evaluate():
         points_per_section = 0
 
         # test (h.i)
-        if hashlib.sha256(submitted_output[11][1].encode()).hexdigest() != desired_output[11][1] or submitted_output[11][0] != desired_output[11][0]:
+        try:
+            if hashlib.sha256(submitted_output[11][1].encode()).hexdigest() != desired_output[11][1] or submitted_output[11][0] != desired_output[11][0]:
+                points -= 1.0
+                points_per_section -= 1.0
+                comments.append('(h.i) [-1] incorrect/no output')
+        except IndexError:
             points -= 1.0
             points_per_section -= 1.0
             comments.append('(h.i) [-1] incorrect/no output')
@@ -523,20 +533,28 @@ def evaluate():
         points_per_section = 0
 
         # test h.ii
-        if hashlib.sha256(submitted_output[12][1].encode()).hexdigest() != desired_output[12][1] or submitted_output[12][0] != desired_output[12][0]:
+        try:
+            if hashlib.sha256(submitted_output[12][1].encode()).hexdigest() != desired_output[12][1] or submitted_output[12][0] != desired_output[12][0]:
+                points -= 1.0
+                points_per_section -= 1.0
+                comments.append('(h.ii) [-1] incorrect/no output')
+        except IndexError:
             points -= 1.0
             points_per_section -= 1.0
             comments.append('(h.ii) [-1] incorrect/no output')
-
         final_output.append(points_per_section)
         points_per_section = 0
 
         # test h.iii
-        if hashlib.sha256(submitted_output[13][1].encode()).hexdigest() != desired_output[13][1] or submitted_output[13][0] != desired_output[13][0]:
+        try:
+            if hashlib.sha256(submitted_output[13][1].encode()).hexdigest() != desired_output[13][1] or submitted_output[13][0] != desired_output[13][0]:
+                points -= 1.0
+                points_per_section -= 1.0
+                comments.append('(h.iii) [-1] incorrect/no output')
+        except IndexError:
             points -= 1.0
             points_per_section -= 1.0
             comments.append('(h.iii) [-1] incorrect/no output')
-
         final_output.append(points_per_section)
         final_output.append(points_per_section_code)
 
