@@ -71,6 +71,7 @@ def evaluate():
     comments = list()
 
     sql_file_path = os.path.join(solution_dir, 'Q2.SQL.txt')
+    sql_file_path_big = os.path.join(solution_dir, 'Q2.SQL.TXT')
     out_file_path = os.path.join(solution_dir, 'Q2.OUT.txt')
     db_file_path = os.path.join(solution_dir, 'Q2.db')
     data_dir = solution_dir+"/data"
@@ -79,7 +80,8 @@ def evaluate():
     assert os.path.isdir(data_dir)
 
     # no points if Q2.SQL.txt does not exist in the solution directory
-    if not os.path.exists(sql_file_path):
+    if not os.path.exists(sql_file_path) or not os.path.exists(sql_file_path_big):
+        print(os.listdir())
         points -= 36.0
         comments.append('[-35] Q2.SQL.txt not found')
         return points, '; '.join(comments)
@@ -97,7 +99,7 @@ def evaluate():
     if os.path.exists(db_file_path): os.remove(db_file_path)
     if os.path.exists(out_file_path): os.remove(out_file_path)
     try:
-        error_code = subprocess.call('sqlite3 Q2.db < Q2.SQL.txt > Q2.OUT.txt',
+        error_code = subprocess.call('sqlite3 Q2.db < Q2.SQL.txt > Q2.OUT.TXT',
                                      cwd=solution_dir, shell=True, timeout=120)
         # if error_code != 0:
         #     points -= 35.0
@@ -283,20 +285,26 @@ def evaluate():
         points_per_section = 0
 
         # test (c.ii)
-        if hashlib.sha256(submitted_output[4][1].encode()).hexdigest() != desired_output[4][1] or submitted_output[4][0] != desired_output[4][0]:
-            if(len(submitted_output[4]) > 0):
-                if submitted_output[4][1] != submitted_output[4][1]:
-                    points -= 1.0
-                    points_per_section -= 1.0
-                    comments.append('(c.ii) [-1] correct count but incorrect column name')
-                else:
-                    points -= 2.0
-                    points_per_section -= 2.0
-                    comments.append('(c.ii) [-2] incorrect/no output')
-            else:
+        c2_desired_ouput = 'd59eced1ded07f84c145592f65bdf854358e009c5cd705f5215bf18697fed103'
+
+        if submitted_output[4][0] != desired_output[4][0]:
+            if hashlib.sha256(submitted_output[4][1].encode()).hexdigest() != desired_output[4][1] or hashlib.sha256(submitted_output[4][1].encode()).hexdigest() != c2_desired_ouput:
                 points -= 2.0
                 points_per_section -= 2.0
-                comments.append('(c.ii) [-2] incorrect/no output') 
+                comments.append('(c.ii) [-2] incorrect/no output')
+            elif hashlib.sha256(submitted_output[4][1].encode()).hexdigest() == desired_output[4][1]:
+                points -= 1.0
+                points_per_section -= 1.0
+                comments.append('(c.ii) [-1] correct count but incorrect column name')  
+            elif hashlib.sha256(submitted_output[4][1].encode()).hexdigest() == c2_desired_ouput:
+                points -= 1.0
+                points_per_section -= 1.0
+                comments.append('(c.ii) [-1] correct count but incorrect column name')
+        elif hashlib.sha256(submitted_output[4][1].encode()).hexdigest() != desired_output[4][1] and hashlib.sha256(submitted_output[4][1].encode()).hexdigest() != c2_desired_ouput:
+            points -= 2.0
+            points_per_section -= 2.0
+            comments.append('(c.ii) [-2] incorrect/no output')            
+
         final_output.append(points_per_section)
         points_per_section = 0
 
@@ -359,7 +367,14 @@ def evaluate():
 '1d2842862c1e5f87900e0b87b3efc8b6abf5d18899e254414649d55fe39f2d46,de2eb6439cf3d842edb9eb123b56afb638e27ede347c86429389c554f0c41b1e', 
 '2d65828f5a6b97dd0dde7a95c9d32ba210a4f110a5068532923efc6d10f7088b,ad5482cf6941dccd38150c2fe806cf771809d813996b683b2b44559bf39d136b', 
 '057af45fb43ee158f7738eae864cde11b42b6ec6adf0df12d30e25fa32e34a92,16a29e295c5e00bc00f65e7485fd9388b550fc6e5ef22cb51e6ae1b62a3adfcd']
-        if submitted_output_new != desired_output[6] and submitted_output_new != desired_output_new:
+        desired_output_new_2 = ['theme,percentage', 
+'6e317bcd6839e8877395411b47b2b89d2bae7ccb05f78cee32bcdf76b5294265,f957bd7f48ae4c9b89a998e1c839624e43af57e28c93f4f356283241baf71a24', 
+'86ac6ab7840c79379d8770ff849017aad9020fed1812a62734660ed7f76824ab,1526ef47a537232b1d6dacaeae7cccea8e49602b32d3ef207581702ec9899322', 
+'6efced6a7e04d1137ae7e833b91a4b7660fc985091525eae5bf656819a7f31f9,c31d121f7a6d377ed2bf7d7b48bd9ad19d5d3845f86b15dee93d00119db2b2f6', 
+'1d2842862c1e5f87900e0b87b3efc8b6abf5d18899e254414649d55fe39f2d46,5dceb7c6ca3a4f131f0c6799be56cb55079607bcdc6c9ab8246869d128788533', 
+'2d65828f5a6b97dd0dde7a95c9d32ba210a4f110a5068532923efc6d10f7088b,452c9dde6ac4e6d5b99a793175fbdb360e239cfb1917955d3df7d56205ecc066', 
+'057af45fb43ee158f7738eae864cde11b42b6ec6adf0df12d30e25fa32e34a92,47f19dba1ac252d2543518a6445ea8081420d08505f3eae4e9dc87ff8c356e06']
+        if submitted_output_new != desired_output[6] and submitted_output_new != desired_output_new and submitted_output_new != desired_output_new_2:
             part_points = 0
             part_comments = list()
 
