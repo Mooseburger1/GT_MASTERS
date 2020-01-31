@@ -81,7 +81,6 @@ def evaluate():
 
     # no points if Q2.SQL.txt does not exist in the solution directory
     if not os.path.exists(sql_file_path) or not os.path.exists(sql_file_path_big):
-        print(os.listdir())
         points -= 36.0
         comments.append('[-35] Q2.SQL.txt not found')
         return points, '; '.join(comments)
@@ -415,19 +414,23 @@ def evaluate():
         points_per_section = 0
 
         # test (f)
+        
         submitted_output_new = []
         submitted_output_new.append('sub_theme,num_sets')
         for i in range(len(submitted_output[7])-1):
             submitted_output_new.append(str(hashlib.sha256(submitted_output[7][i+1].split(",")[0].encode()).hexdigest()) + "," + str(hashlib.sha256(submitted_output[7][i+1].split(",")[1].encode()).hexdigest()))
-    
-        if submitted_output_new != desired_output[7]:
+        
+        desired_output_2 = ['sub_theme,num_sets', '46d755b90f440bad11711d83be7588225cb14b13c3ea9500f0b4b82e3217a7ac,76a50887d8f1c2e9301755428990ad81479ee21c25b43215cf524541e0503269', '8f27f432fcbaa4b5180a1cc7a8fa166a93cda3c1bce6f19922dd519d02f4bb39,624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4', '26482652ab786704a80db8aecf46c550a8eda060e5cc94553928f4eb19d95bec,3fdba35f04dc8c462986c992bcf875546257113072a909c162f7e470e581e278', '1114f1eba77828092dc76651db61eb16133c7f3bd925ac6d58b72db538089a32,4fc82b26aecb47d2868c4efbe3581732a3e7cbcc6c2efb32062c08170a05eeb8', 'cfb7c605ff3839bf8b02cc6acc3565a16784f2776344f2f26f1ce14012d5c1f9,2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3', '3ecaed62a3798a8d385b0803cd5eab9e31ae9010709d8da17c588253864da65a,7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451', '0bf853b6a549dd69b531ca97ca0aefba2f0bacab31f7133673351e1af42d5689,7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451', '0d1f28479f370677d597466bdf4aa4bd0ff847307a6e83e1cba2069155059af3,7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451', '2cfbcfe05812153e072ff33134601bd5de930e376e08b988d3220d55412f40fb,e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919683', 'e0c799908ea9e185e80c0ea543ebcf0f31594a99f547ce0c47238b827e9c3697,e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919683']
+        
+        if submitted_output_new != desired_output[7] and submitted_output_new != desired_output_2:
             not_found = list()
             found = list()
             part_comments = list()
             deduction = 0.0
-            
+             
             subtheme_counts = {k: v for k, v in (s.split(',') for s in desired_output[7][1:])}
             subtheme_names = list(subtheme_counts.keys())
+            
             try:
                 submitted_counts = {k: v for k, v in (s.split(',') for s in submitted_output_new[1:])}
             except:

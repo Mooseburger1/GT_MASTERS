@@ -117,7 +117,7 @@ SELECT a.name AS theme, COUNT(*) as num_sets FROM top_level_themes AS a INNER JO
 
 CREATE VIEW counts AS SELECT a.name, COUNT(*) as cnt FROM top_level_themes AS a INNER JOIN sets AS b on a.id=b.theme_id GROUP BY a.name;
 
-SELECT a.name AS theme, printf("%.2f", (COUNT(*) * 1.0 / t.total) * 100.00) AS percentage FROM top_level_themes AS a, (SELECT SUM(cnt) AS total FROM counts) AS t INNER JOIN sets AS b on a.id=b.theme_id GROUP BY a.name;
+SELECT a.name AS theme, printf("%.2f", (COUNT(*) * 1.0 / t.total) * 100.00) AS percentage FROM top_level_themes AS a, (SELECT SUM(cnt) AS total FROM counts) AS t INNER JOIN sets AS b on a.id=b.theme_id GROUP BY a.name HAVING CAST(percentage AS decimal) >=5.00  ORDER BY CAST(percentage AS decimal) DESC;
 
 -- [insert your SQL statement(s) ABOVE this line]
 
