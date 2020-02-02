@@ -1,0 +1,25 @@
+div.bar{
+    display: inline-block;
+    width:20px;
+    height: 75px;
+    margin-right: 2px;
+    background-color: rgb(0, 0, 0);
+}
+
+rect.sbar{
+    fill: rgb(39, 92, 33);
+    margin-right: 2px;
+}
+
+/* .axis path,
+.axis line{
+    stroke: teal;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: Optima, Futura, sans-serif;
+    font-weight: bold;
+    font-size: 14px;
+    fill: teal;
+} */

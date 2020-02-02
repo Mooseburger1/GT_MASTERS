@@ -1,6 +1,6 @@
 i. rows: 47
-ii. columns: 6
-iii. function: Daitch-Mokotoff
+ii. columns: 5
+iii. function: ngram-fingerprint
 iv. GREL_brandname: if(value==null,'Unbranded',value)
 v. GREL_highpriced: if(toNumber(value) > 90, 1, 0)
 vi. GREL_hasoffer: if(or(contains(toLowercase(toString(value)), "discount"),contains(toLowercase(toString(value)), "offer"),contains(toLowercase(toString(value)), "sale")), 1, 0)

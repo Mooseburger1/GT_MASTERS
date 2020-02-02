@@ -16,6 +16,9 @@ DROP TABLE IF EXISTS parts_fts;
 
 -- [insert your SQL statement(s) BELOW this line]
 
+CREATE TABLE sets (set_num TEXT, name TEXT, year INTEGER, theme_id INTEGER, num_parts INTEGER);
+CREATE TABLE themes (id INTEGER, name TEXT, parent_id INTEGER);
+CREATE TABLE parts (part_num TEXT, name TEXT, part_cat_id INTEGER, part_material_id INTEGER);
 
 -- [insert your SQL statement(s) ABOVE this line]
 
@@ -29,6 +32,9 @@ DROP TABLE IF EXISTS parts_fts;
 
 -- [insert your SQLite command(s) BELOW this line]
 
+.import data/sets.csv sets
+.import data/themes.csv themes
+.import data/parts.csv parts
 
 -- [insert your SQLite command(s) ABOVE this line]
 
@@ -47,8 +53,9 @@ SELECT count(*) FROM sqlite_master WHERE type='table' AND name='themes';
 
 -- [insert your SQL statement(s) BELOW this line]
 
-
-
+CREATE INDEX sets_index ON sets(set_num);
+CREATE INDEX parts_index ON parts(part_num);
+CREATE INDEX themes_index ON themes(id);
 
 -- [insert your SQL statement(s) ABOVE this line]
 
@@ -63,8 +70,7 @@ SELECT count(*) FROM sqlite_master WHERE type='table' AND name='themes';
 
 -- [insert your SQL statement(s) BELOW this line]
 
-
-
+CREATE VIEW top_level_themes AS SELECT id, name FROM themes WHERE parent_id = '' OR parent_id IS NULL;
 
 -- [insert your SQL statement(s) ABOVE this line]
 
@@ -81,8 +87,7 @@ PRAGMA table_info(top_level_themes);
 
 -- [insert your SQL statement(s) BELOW this line]
 
-
-
+SELECT COUNT(*) AS count FROM top_level_themes;
 
 -- [insert your SQL statement(s) ABOVE this line]
 
@@ -96,7 +101,7 @@ PRAGMA table_info(top_level_themes);
 
 -- [insert your SQL statement(s) BELOW this line]
 
-
+SELECT a.name AS theme, COUNT(*) as num_sets FROM top_level_themes AS a INNER JOIN sets AS b on a.id=b.theme_id GROUP BY a.name HAVING num_sets > 25 ORDER BY num_sets DESC LIMIT 10;
 
 
 -- [insert your SQL statement(s) ABOVE this line]
@@ -110,8 +115,9 @@ PRAGMA table_info(top_level_themes);
 
 -- [insert your SQL statement(s) BELOW this line]
 
+CREATE VIEW counts AS SELECT a.name, COUNT(*) as cnt FROM top_level_themes AS a INNER JOIN sets AS b on a.id=b.theme_id GROUP BY a.name;
 
-
+SELECT a.name AS theme, printf("%.2f", (COUNT(*) * 1.0 / t.total) * 100.00) AS percentage FROM top_level_themes AS a, (SELECT SUM(cnt) AS total FROM counts) AS t INNER JOIN sets AS b on a.id=b.theme_id GROUP BY a.name HAVING CAST(percentage AS decimal) >=5.00  ORDER BY CAST(percentage AS decimal) DESC;
 
 -- [insert your SQL statement(s) ABOVE this line]
 
@@ -123,7 +129,8 @@ PRAGMA table_info(top_level_themes);
 -- (f) Summarize a sub-theme
 
 -- [insert your SQL statement(s) BELOW this line]
-
+CREATE VIEW subthemes AS SELECT * FROM themes WHERE parent_id IS NOT NULL AND parent_id != '';
+SELECT a.name AS sub_theme, COUNT(*) AS num_sets FROM subthemes AS a INNER JOIN sets AS b ON a.id=b.theme_id GROUP BY a.name HAVING num_sets > 5 ORDER BY num_sets DESC, a.name;
 
 
 
@@ -137,7 +144,7 @@ PRAGMA table_info(top_level_themes);
 -- (g.i.) Create the sets VIEW
 
 -- [insert your SQL statement(s) BELOW this line]
-
+CREATE VIEW sets_years AS SELECT ROWID, year, COUNT(*) AS sets_count FROM sets GROUP BY year;
 
 
 
@@ -156,7 +163,7 @@ SELECT count(*) FROM sqlite_master WHERE type='table' AND name='sets_years';
 -- (g.ii) Find the running total of sets in the Rebrickable database each year
 
 -- [insert your SQL statement(s) BELOW this line]
-
+SELECT a.year AS year, SUM(b.sets_count) AS running_total FROM sets_years AS a, sets_years AS b WHERE b.year <= a.year GROUP BY a.year HAVING a.year >= 1980 AND a.year < 1990;
 
 
 
@@ -171,7 +178,8 @@ SELECT count(*) FROM sqlite_master WHERE type='table' AND name='sets_years';
 
 -- [insert your SQL statement(s) BELOW this line]
 
-
+CREATE VIRTUAL TABLE parts_fts USING fts4(part_num text, name text, part_cat_id integer, part_material_id integer);
+.import data/parts.csv parts_fts
 
 
 -- [insert your SQL statement(s) ABOVE this line]
@@ -188,7 +196,7 @@ PRAGMA table_info(parts_fts);
 -- (h.i) Count the number of unique parts whose name field begins with the prefix ‘mini’.
 
 -- [insert your SQL statement(s) BELOW this line]
-
+SELECT COUNT(DISTINCT part_num) AS count_overview FROM parts_fts WHERE name LIKE 'mini%';
 
 
 
@@ -202,7 +210,7 @@ PRAGMA table_info(parts_fts);
 -- (h.ii) List the part_num’s of the unique parts that contain the terms ‘minidoll’ and ‘boy’ in the name field with no more than 5 intervening terms.
 
 -- [insert your SQL statement(s) BELOW this line]
-
+SELECT COUNT(DISTINCT part_num) AS total_boy_minidoll FROM parts_fts WHERE name MATCH '*minidoll* NEAR/5 *boy* OR *boy* NEAR/5 *minidoll*';
 
 
 
@@ -216,6 +224,7 @@ PRAGMA table_info(parts_fts);
 -- (h.iii) List the part_num’s of the unique parts that contain the terms ‘minidoll’ and ‘girl’ in the name field with no more than 5 intervening terms.
 
 -- [insert your SQL statement(s) BELOW this line]
+SELECT COUNT(DISTINCT part_num) AS total_girl_minidoll FROM parts_fts WHERE name MATCH '*minidoll* NEAR/5 *girl* OR *girl* NEAR/5 *minidoll*';
 
 
 
