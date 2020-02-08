@@ -2,7 +2,7 @@ from training_set_generator import walkGenerator
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from td_lambda import td_lambda
+from td_lambda import experiment_1
 from multiprocessing import Process, Queue
 
 parser = argparse.ArgumentParser()
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     #iterate through each training set and assign it to its own process
     for i in range(len(generated_sets)):
         print('Creating Process #',i)
-        p = Process(target=td_lambda, args=(generated_sets[i], float(args.alpha), float(args.gamma), q))
+        p = Process(target=experiment_1, args=(generated_sets[i], float(args.alpha), float(args.gamma), q))
         p.start()
         processes.append(p)
     #get results from each training set  

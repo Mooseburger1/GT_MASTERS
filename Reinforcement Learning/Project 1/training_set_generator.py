@@ -10,13 +10,13 @@ class walkGenerator:
         
         #Dictionary to encode state position to a vector
         self.state_arrays = {
-                'A':np.array([1,0,0,0,0,0,0]),
-                'B':np.array([0,1,0,0,0,0,0]),
-                'C':np.array([0,0,1,0,0,0,0]),
-                'D':np.array([0,0,0,1,0,0,0]),
-                'E':np.array([0,0,0,0,1,0,0]),
-                'F':np.array([0,0,0,0,0,1,0]),
-                'G':np.array([0,0,0,0,0,0,1])
+                'A':np.array([1,0,0,0,0,0,0], dtype='float64'),
+                'B':np.array([0,1,0,0,0,0,0], dtype='float64'),
+                'C':np.array([0,0,1,0,0,0,0], dtype='float64'),
+                'D':np.array([0,0,0,1,0,0,0], dtype='float64'),
+                'E':np.array([0,0,0,0,1,0,0], dtype='float64'),
+                'F':np.array([0,0,0,0,0,1,0], dtype='float64'),
+                'G':np.array([0,0,0,0,0,0,1], dtype='float64')
                }
         #Possible states
         self.states = ('A','B','C','D','E','F','G')
@@ -60,7 +60,7 @@ class walkGenerator:
         for position in walk:
             state_matrix.append(self.state_arrays[position])
 
-        state_matrix = np.array(state_matrix)
+        state_matrix = np.array(state_matrix, dtype='float64')
         
         return Walk(state_matrix, r)
     
@@ -71,9 +71,9 @@ class walkGenerator:
         assert sequences_per_sample > 0, 'sequences_per_sample param must be greater than 0'
         
         training_sets = []
-        for i in range(num_samples):
+        for _ in range(num_samples):
             current_set = []
-            for j in range(sequences_per_sample):
+            for _ in range(sequences_per_sample):
                 
                 walk = self.take_a_walk()
                 current_set.append(walk)
