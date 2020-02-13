@@ -1,4 +1,5 @@
 .ipynb_checkpoints
+/*/**/__pycache__/
 
 /*/**/*.csv
 /*/**/part-r*
@@ -8,6 +9,7 @@
 /*/**/part*
 /*/**/0000*
 /*/**/.000*
+
 
 */homework2/code/pig/aliveevents/part-r-00000
 */homework3/code/data/encounter_INPUT.csv
