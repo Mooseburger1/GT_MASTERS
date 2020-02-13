@@ -3,16 +3,34 @@ import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
 from training_set_generator import walkGenerator
 from td_lambda import experiment_2
+import argparse
+import pickle
 
-
-
-
+parser = argparse.ArgumentParser()
+parser.add_argument('-l', '--load_training_set', dest='load', help='Load the saved training set if true, generate new training set if false', default='true')
+parser.add_argument('-t', '--training_sets', dest='num_train_sets', help="Number of training sets to be generated", default=100)
+parser.add_argument('-s', '--sequences', dest='num_sequences', help='Number of sequences per training set', default=10)
+args = parser.parse_args()
 
 if __name__ == '__main__':
 
-    alphas = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6]
-    generated_sets = walkGenerator().generate_training_sets(num_samples=100, sequences_per_sample=10)
+    assert args.load in ['true', 'false'], 'Argument -l or --load_training_set can only be [true, false]'
 
+    
+    if args.load == 'true':
+        print('loading training data from training_set.pickle')
+        with open('training_set.pickle', 'rb') as file:
+            generated_sets = pickle.load(file)
+    else:
+        #generate training sets
+        print('Generating Random Walk Training Sets')
+        generated_sets = walkGenerator().generate_training_sets(num_samples=args.num_train_sets, sequences_per_sample=args.num_sequences)
+        print('Saving New Generated Data Set to "training_set.pickle"')
+        with open('training_set.pickle', 'wb') as file:
+            pickle.dump(generated_sets, file)
+
+    alphas = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6]
+    
     point_zero = []
     point_one = []
     point_two = []
@@ -101,9 +119,8 @@ if __name__ == '__main__':
     plt.plot(alphas, one, color='orange', marker='o', label='λ = 1.0', path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
     plt.xlabel(chr(945))
     plt.ylabel('RMSE')
-    plt.title('SCOTT SIMS FIGURE 4 REPLICATION', fontsize=50)
-    plt.ylim(0,1.0)
-    plt.legend()
+    plt.ylim(0,0.8)
+    plt.legend(loc='lower right')
     plt.show()
 
 

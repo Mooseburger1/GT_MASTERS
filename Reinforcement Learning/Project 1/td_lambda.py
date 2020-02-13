@@ -85,7 +85,7 @@ def experiment_2(training_set, lamda, gamma, alphas):
                 transition = np.argmax(walk[step+1])
                 eligibility[state] +=1
                 update = rewards[step] + gamma*values[transition] - values[state]
-                for pos, val in enumerate(values):
+                for pos, _ in enumerate(values):
                     state_weights[pos].append( alpha * update * eligibility[pos] )
                     eligibility[pos] = eligibility[pos] * lamda * gamma
 
