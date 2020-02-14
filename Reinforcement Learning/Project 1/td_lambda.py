@@ -66,7 +66,7 @@ def experiment_2(training_set, lamda, gamma, alphas):
 
         state_weights = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[]}
         global_values = [0,0.5,0.5,0.5,0.5,0.5,0]
-
+        
 
 
 
@@ -74,7 +74,6 @@ def experiment_2(training_set, lamda, gamma, alphas):
         for sequence in training_set:
 
             values = global_values.copy()
-            assert values == global_values, 'Initialization of state values is not feeding forward to the next episode'
             eligibility = np.zeros(7, dtype='float64')
 
             walk = sequence.Route
