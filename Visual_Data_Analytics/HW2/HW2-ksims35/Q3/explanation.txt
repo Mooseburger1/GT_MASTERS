@@ -1,0 +1,1 @@
+We would want to use nonlinear scales in the event that the magnitudes of data points/lines differ greatly. The larger orders will dwarf the smaller, making their characteristics appear flat.

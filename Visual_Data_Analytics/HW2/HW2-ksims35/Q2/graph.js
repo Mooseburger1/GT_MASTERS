@@ -1,30 +1,4 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
-<style>
 
-path.link {
-  fill: none;
-  stroke: #666;
-  stroke-width: 1.5px;
-}
-
-circle {
-  fill: #ccc;
-  stroke: #fff;
-  stroke: black;
-  stroke-width: 1.5px;
-}
-
-text {
-  fill: #000;
-  font: 10px sans-serif;
-  pointer-events: none;
-}
-
-</style>
-<body>
-<script>
 
 // get the data
 links =  [
@@ -293,8 +267,40 @@ var path = svg.append("g")
     .data(links)
     .enter()
     .append("path")
-    .attr("class", function(d) { return "link " + d.type; });
+    .attr("class", function(d){                                            //Change the class of each path depending on data value
+        if (d.value == 0){
+            return "edge_zero";                                           //If value is 0 change class to edge_zero and update formatting via CSS
+        }
+        else{
+            return "edge_one";                                            //If value is 1 change class to edge_one and update formatting via CSS
+        }
+    });
+    //.attr("class", function(d) { return "link " + d.type; });
 
+//function for pinning nodes
+function pinned(d){
+
+    if (d.fixed == false || d.fixed == null){
+        d.fixed = true;
+
+        d3.select(this).selectAll("text").attr("class", "pinned");
+    }
+    else{
+        d3.select(this).selectAll("text").attr("class", "labels");
+        d.fixed = false;
+        dragended(d);
+
+       
+        
+       
+
+        
+      
+};
+};
+//Scaler for node radius
+var radiusScaler = d3.scaleLinear().domain([0,20]).range([10,100]);                                      //Scaler for node radius size
+var color = ["#f7fbff","#e3eef9","#cfe1f2","#b5d4e9","#93c3df","#6daed5","#4b97c9","#2f7ebc","#1864aa","#0a4a90","#08306b"]     //ColorBrewer Scale
 // define the nodes
 var node = svg.selectAll(".node")
     .data(force.nodes())
@@ -303,11 +309,41 @@ var node = svg.selectAll(".node")
     .call(d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
-        .on("end", dragended));
+        .on("end", dragended))
+    .on("dblclick", pinned);
+    
 
 // add the nodes
 node.append("circle")
-    .attr("r", 5);
+    .attr("r", function(d){
+        d.weight = links.filter(function(l){
+            return l.source.index == d.index || l.target.index == d.index;
+        }).length;
+
+        
+        return radiusScaler(d.weight);
+    })
+    .attr("fill", function(d){
+        d.weight = links.filter(function(l){
+            return l.source.index == d.index || l.target.index == d.index;
+        }).length;
+
+        
+        return color[d.weight];
+
+    });
+
+// Add node labels
+var labels = node.append("text")                        //Append "text" elements
+                 .text(function(d) {                    //nodes have a __data__ attribute which contains name, x, and y
+                     return d.name;                     //return d.name for name attr
+                 })
+                 .attr('x', 6)
+                 .attr('y', 12)
+                 .attr("class", "labels");
+
+
+
 
 // add the curvy lines
 function tick() {
@@ -351,6 +387,11 @@ function dragended(d) {
     }
 };
 
-</script>
-</body>
-</html>
+
+
+//My credentials
+svg.append("text")
+   .attr("x", 900)
+   .attr("y", 20)
+   .style("font-size", "16px")
+   .text("ksims35")

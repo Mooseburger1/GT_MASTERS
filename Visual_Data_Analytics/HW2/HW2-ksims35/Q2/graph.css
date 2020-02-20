@@ -1,0 +1,45 @@
+
+
+path.link {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5px;
+}
+
+.edge_zero{
+    fill: none;
+    stroke: blue;
+    stroke-width: 5px;
+}
+
+.edge_one{
+    fill: none;
+    stroke: black;
+    stroke-width: 1.5px;
+    stroke-dasharray: 2.5;
+}
+
+circle {
+  
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+text {
+  fill: #000;
+  font: 10px sans-serif;
+  pointer-events: none;
+}
+
+.labels{
+    fill: black;
+    font-weight: 900;
+}
+
+.pinned{
+    fill: #999999; 
+    stroke: #b31515; 
+    stroke-width: 2px; 
+    font-size: 30px;
+    font-weight: bolder
+}

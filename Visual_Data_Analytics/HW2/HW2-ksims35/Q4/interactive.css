@@ -1,0 +1,38 @@
+.southLine{
+    fill:none;
+    stroke:green;
+    stroke-width: 3;
+}
+
+.westLine{
+    fill:none;
+    stroke:purple;
+    stroke-width:3;
+}
+
+.midwestLine{
+    fill:none;
+    stroke:red;
+    stroke-width:3;
+}
+
+.northeastLine{
+    fill:none;
+    stroke:blue;
+    stroke-width:3;
+}
+
+.axis{
+    font-weight:"bolder";
+    font-size: 15px;
+}
+
+ div.lineChart{
+    height: 50%;
+    width: 100%
+}
+
+div.barChart{
+    height: 50%;
+    width: 100%;
+} 

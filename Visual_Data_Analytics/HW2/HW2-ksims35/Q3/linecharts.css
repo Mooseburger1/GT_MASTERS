@@ -1,0 +1,28 @@
+.five_line{
+    fill: none;
+    stroke: #FFC300;
+    stroke-width: 3;
+}
+
+.six_line{
+    fill: none;
+    stroke: #FF5733;
+    stroke-width: 3;
+}
+
+.seven_line{
+    fill: none;
+    stroke: #C70039;
+    stroke-width: 3;
+}
+
+.eight_line{
+    fill: none;
+    stroke: #900C3F;
+    stroke-width: 3;
+}
+
+
+@media print {
+    .pagebreak { page-break-before: always; } /* page-break-after works, as well */
+}
