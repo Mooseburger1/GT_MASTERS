@@ -10,7 +10,7 @@ body, html{
 }
 
 .background{
-    background-image: url("images/dday.jpg");
+    background-image: url("images/dday.jpg")z;
     height: 100%;
     width: 100%;
     background-position: center;
