@@ -9,6 +9,7 @@
 /*/**/part*
 /*/**/0000*
 /*/**/.000*
+/*/**/data.tsv
 
 Reinforcement\ Learning/Projects
 
@@ -18,3 +19,6 @@ Reinforcement\ Learning/Projects
 */homework2/code/pig/filtered/part-r-00000
 */homework1/homework1/data/train/events.csv
 */homework2/data/events.csv
+
+Visual_Data_Analytics/CSE6242
+Visual_Data_Analytics/Project_Test_Code/videos/
