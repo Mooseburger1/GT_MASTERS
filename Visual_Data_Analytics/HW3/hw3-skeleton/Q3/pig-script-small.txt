@@ -14,6 +14,7 @@ locations = FOREACH locations_raw GENERATE $0, REPLACE($1, '"', '') AS Borough, 
 -- ################################
 -- ### Put additional code below:
 -- ################################
+<<<<<<< HEAD
 green_filter= FILTER green BY trip_distance >= 2.0;
 yellow_filter = FILTER yellow BY trip_distance >= 2.0;
 
@@ -25,3 +26,5 @@ taxi = FOREACH union_data GENERATE $0 AS vendor, $1 AS pickup_datetime, $2 AS dr
 yellow: {vendor: int,pickup_datetime: chararray,dropoff_datetime: chararray,passenger_count: int,trip_distance: float,ratecode: int,store_and_fwd_flag: chararray,
 PULocationID: int,DOLocationID: int,payment_type: int,fare_amount: float,extra: float,tip_amount: float,tolls_amount: float,improvement_surcharge: float,total_amount: float,
 congestion_surcharge: float}
+=======
+>>>>>>> 43030924a565b33aa7d6a6280504b8f3a3183245
