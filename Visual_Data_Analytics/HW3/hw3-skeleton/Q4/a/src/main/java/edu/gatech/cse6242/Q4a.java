@@ -12,21 +12,14 @@ import java.io.IOException;
 public class Q4a {
 
   public static void main(String[] args) throws Exception {
-<<<<<<< HEAD
     String outputTempDir = args[1] + "temp";
     /* TODO: Update variable below with your gtid */
     final String gtid = "ksims35";
-=======
-
-    /* TODO: Update variable below with your gtid */
-    final String gtid = "gburdell3";
->>>>>>> 43030924a565b33aa7d6a6280504b8f3a3183245
 
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "Q4a");
 
     /* TODO: Needs to be implemented */
-<<<<<<< HEAD
     job.setJarByClass(Q4a.class);
 
     job.setMapperClass(myMapper.class);
@@ -52,11 +45,5 @@ public class Q4a {
     FileOutputFormat.setOutputPath(job2, new Path(args[1]));
     System.exit(job2.waitForCompletion(true) ? 0 : 1);
     
-=======
-
-    FileInputFormat.addInputPath(job, new Path(args[0]));
-    FileOutputFormat.setOutputPath(job, new Path(args[1]));
-    System.exit(job.waitForCompletion(true) ? 0 : 1);
->>>>>>> 43030924a565b33aa7d6a6280504b8f3a3183245
   }
 }

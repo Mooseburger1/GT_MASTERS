@@ -13,17 +13,12 @@ public class Q4b {
 
   public static void main(String[] args) throws Exception {
     /* TODO: Update variable below with your gtid */
-<<<<<<< HEAD
     final String gtid = "ksims35";
-=======
-    final String gtid = "gburdell3";
->>>>>>> 43030924a565b33aa7d6a6280504b8f3a3183245
 
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "Q4b");
 
     /* TODO: Needs to be implemented */
-<<<<<<< HEAD
     job.setJarByClass(Q4b.class);
 
     job.setMapperClass(myMapper.class);
@@ -32,8 +27,6 @@ public class Q4b {
     job.setOutputKeyClass(IntWritable.class);
     job.setOutputValueClass(FloatWritable.class);
 
-=======
->>>>>>> 43030924a565b33aa7d6a6280504b8f3a3183245
 
     FileInputFormat.addInputPath(job, new Path(args[0]));
     FileOutputFormat.setOutputPath(job, new Path(args[1]));
