@@ -14,17 +14,43 @@ locations = FOREACH locations_raw GENERATE $0, REPLACE($1, '"', '') AS Borough, 
 -- ################################
 -- ### Put additional code below:
 -- ################################
-<<<<<<< HEAD
 green_filter= FILTER green BY trip_distance >= 2.0;
+green_filter = FOREACH green_filter GENERATE passenger_count, PULocationID, DOLocationID, fare_amount, tip_amount, total_amount;
+
+
 yellow_filter = FILTER yellow BY trip_distance >= 2.0;
+yellow_filter = FOREACH yellow_filter GENERATE passenger_count, PULocationID, DOLocationID, fare_amount, tip_amount, total_amount;
 
 union_data = UNION green_filter, yellow_filter;
 
-taxi = FOREACH union_data GENERATE $0 AS vendor, $1 AS pickup_datetime, $2 AS dropoff_datetime, $3 AS passenger_count, $4 AS trip_distance, $5 AS ratecode, $6 AS store_and_fwd_flag, $7 AS PULocationID, $8 AS DOLocationID, $9 AS payment_type, $10 AS fare_amount, $11 AS extra, $12 AS tip_amount, $13 AS tolls_amount, $14 AS improvement_surcharge, $15 AS total_amount, $16 AS congestion_surcharge;
+grouped = GROUP union_data BY DOLocationID;
+
+popular = FOREACH grouped GENERATE FLATTEN(group), SUM(union_data.passenger_count);
+popular = ORDER popular BY $1 DESC;
+popular = limit popular 20;
 
 
-yellow: {vendor: int,pickup_datetime: chararray,dropoff_datetime: chararray,passenger_count: int,trip_distance: float,ratecode: int,store_and_fwd_flag: chararray,
-PULocationID: int,DOLocationID: int,payment_type: int,fare_amount: float,extra: float,tip_amount: float,tolls_amount: float,improvement_surcharge: float,total_amount: float,
-congestion_surcharge: float}
-=======
->>>>>>> 43030924a565b33aa7d6a6280504b8f3a3183245
+avgs = GROUP union_data BY PULocationID;
+avgs = FOREACH avgs GENERATE FLATTEN(group), AVG(union_data.total_amount) AS AVG:float;
+
+
+
+puloc = JOIN union_data BY DOLocationID, popular BY $0;
+puloc_grp = GROUP puloc BY PULocationID;
+numerator = FOREACH puloc_grp GENERATE FLATTEN(group) AS PULOC, COUNT(puloc.passenger_count) AS NUMER:float;
+
+puloc_full_grp = GROUP union_data BY PULocationID;
+denominator = FOREACH puloc_full_grp GENERATE FLATTEN(group) AS PULOC, COUNT(union_data.passenger_count) AS DENOM:float;
+
+prop = JOIN numerator BY PULOC, denominator BY PULOC;
+prop = FOREACH prop GENERATE $0, $1 / $3 AS proportion:float;
+
+calc = JOIN avgs BY $0, prop BY $0;
+calc = FOREACH calc GENERATE $0, $1 * $3 AS CALC:float;
+
+final = JOIN calc BY $0, popular BY $0;
+final = JOIN calc BY $0, locations BY $0;
+final = FOREACH final GENERATE $3, $4, $1;
+
+
+
