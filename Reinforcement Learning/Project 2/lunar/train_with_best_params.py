@@ -4,7 +4,15 @@ import gym
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import time
+import argparse
 import pickle
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-g', '--gamma', dest='gamma', help='gamma', default=0.99)
+parser.add_argument('-m', '--memory', dest='memory', help='Memory Size', default=1000000)
+parser.add_argument('-e', '--epsilon_decay', dest='eps_decay', help='Epsilon Decay Factor', default=1e-3)
+args = parser.parse_args()
 
 if __name__ == '__main__':
     tf.compat.v1.disable_eager_execution()
@@ -15,11 +23,11 @@ if __name__ == '__main__':
     env.seed(42)
 
     lr = 0.001
-    n_games = 700
+    n_games = 1000
 
-    gammas = [0.99]
-    mem_sizes = [1000000]
-    epsilon_decs = [1e-3]
+    gammas = [float(args.gamma)]
+    mem_sizes = [int(args.memory)]
+    epsilon_decs = [float(args.eps_decay)]
 
     for gamma in gammas:
         for mem_size in mem_sizes:
@@ -31,6 +39,7 @@ if __name__ == '__main__':
                 avg_scores = []
                 eps_history = []
                 iter_time = []
+                avg_times = []
                 mem_full = []
 
                 for i in range(n_games):
@@ -49,7 +58,8 @@ if __name__ == '__main__':
                     end = time.time()
                     mem_full.append(agent.memory.mem_cntr)
                     iter_time.append(float(end-start))
-
+                    avg_time = np.mean(iter_time[-100:])
+                    avg_times.append(avg_time)
                     eps_history.append(agent.epsilon)
 
                     scores.append(score)
@@ -101,10 +111,11 @@ if __name__ == '__main__':
                 fig,axes = plt.subplots(figsize=(15,8))
                 ax3=plt.subplot()
                 time_ = ax3.plot(x, iter_time, label='Time / Episode', color='purple', ls='--')
+                avgTime = ax3.plot(x, avg_times, color='dodgerblue', ls='-', label='Avg Time / Episode')
                 ax4 = ax3.twinx()
                 mem_buff = ax4.plot(x, mem_full, label='Memory Buffer', color='orange')
 
-                lns2 = time_ + mem_buff
+                lns2 = time_ + avgTime + mem_buff
                 labs2 = [l.get_label() for l in lns2]
                 ax3.legend(lns2, labs2, loc=0)
 

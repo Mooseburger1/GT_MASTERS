@@ -8,7 +8,7 @@ import pickle
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-m', '--model', dest='model', help='Load saved model from h5 file', default=None)
+parser.add_argument('-m', '--model', dest='model', help='Load saved model from h5 file', default='models/best_model.h5')
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -26,8 +26,8 @@ if __name__ == '__main__':
     epsilon_dec =  1e-3
 
     
-    agent = Agent(gamma=gamma, epsilon=1.0, lr=lr, input_dims=env.observation_space.shape, n_actions=env.action_space.n, 
-                    mem_size=mem_size, epsilon_dec=epsilon_dec, batch_size=64, epsilon_end=0.01, saveModel=args.model)
+    agent = Agent(gamma=gamma, epsilon=0, lr=lr, input_dims=env.observation_space.shape, n_actions=env.action_space.n, 
+                    mem_size=mem_size, epsilon_dec=epsilon_dec, batch_size=64, epsilon_end=0, saveModel=args.model)
     agent.load_model()
     scores = []
     avg_scores = []
