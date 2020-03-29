@@ -15,7 +15,12 @@ def entropy(class_y):
     ### Implement your code here
     #############################################
         
-    pass
+    unique_vals, counts = np.unique(class_y, return_counts=True)
+    tot = np.sum(counts)
+
+    probs = {x[0]:x[1]/tot for x in zip(unique_vals,counts)}
+
+    entropy = np.sum([-(val * np.log2(val)) for val in probs.values()])
     #############################################
     return entropy
 
@@ -88,7 +93,27 @@ def partition_classes(X, y, split_attribute, split_val):
     ### Implement your code here
     #############################################
     
-    pass
+    #check if split attribute is numeric
+    if isinstance(split_val, (float,int)):
+        assert isinstance(X[0][split_attribute], (float,int)), 'split_val is a numerical criteria, yet a test of the data type on one of the values in the specified column is not numeric'
+
+        #split the data on the specified column (split_attribute) by the specified criteria (split_val)
+        _ = [(X_left.append(row), y_left.append(y[pos])) if row[split_attribute] <= split_val else (X_right.append(row), y_right.append(y[pos])) for pos,row in enumerate(X)]
+
+    
+    #check if split attribute is categorical
+    elif isinstance(split_val, str):
+        assert isinstance(X[0][split_attribute], str), 'split_val is a categorical criteria, yet a test of the data type on one of the values in the specified column is not categorical'
+
+        #split the data on the specified column (split_attribute) by the specified criteria (split_val)
+        _ = [(X_left.append(row), y_left.append(y[pos])) if row[split_attribute] == split_val else (X_right.append(row), y_right.append(y[pos])) for pos,row in enumerate(X)]
+
+    #No clue what they did
+    else:
+        raise ValueError('Bad arguments for method partition_classes')
+        
+    
+    
     #############################################
     return (X_left, X_right, y_left, y_right)
 
@@ -117,7 +142,22 @@ def information_gain(previous_y, current_y):
     ### Implement your code here
     #############################################
         
-    pass
+    # H = entropy of original set 
+    H = entropy(previous_y)
+
+    # HL = entropy of left split
+    HL = entropy(current_y[0])
+
+    # PL = # of obs in the left split / count(previous_y)
+    PL = len(current_y[0]) / len(previous_y)
+
+    # HR = entropy of right split
+    HR = entropy(current_y[1])
+
+    #PR = # of obs in the right split / count(previous_y)
+    PR = len(current_y[1]) / len(previous_y)
+
+    info_gain = H - (HL * PL + HR * PR)
     #############################################
     return info_gain
     
@@ -144,6 +184,66 @@ def best_split(X, y):
     X_left, X_right, y_left, y_right = [], [], [], []
     ### Implement your code here
     #############################################
-        
-    pass
+    
+    #infomration gain value
+    ig = -np.inf
+
+    # Num of attributes
+    d = len(X[0])
+
+    # set m attributes
+    m = int(d/2)
+    if m <= 0:
+        m = 1
+
+    # choice of m attributes out of d available attributes
+    col_idxs = np.random.choice(a=range(d), size=m, replace=False).tolist()
+
+    #subset the data on the randomly chosen columns
+    X_subset = [[row[i] for i in col_idxs] for row in X]
+
+    #loop through each column and find best split
+    for pos, col in enumerate(col_idxs):
+        #process logic for categorical col
+        if isinstance(X_subset[0][pos], str):
+            #get the unique categories
+            categories = np.unique([row[pos] for row in X_subset])
+            #loop through each category type and gauge split on it
+            for cat in categories:
+                #split on category
+                xl, xr, yl, yr = partition_classes(X=X_subset, y=y, split_attribute=pos, split_val=cat)
+                #information gain
+                new_ig = information_gain(previous_y=y, current_y=[yl, yr])
+                #check if ig is better
+                if new_ig > ig:
+                    ig = new_ig
+                    split_attribute = col
+                    split_value = cat
+                    X_left = xl
+                    X_right = xr
+                    y_left = yl
+                    y_right = yr
+
+        #process logic for continuous col
+        if isinstance(X_subset[0][pos], (float,int)):
+            #calculate the median
+            criteria_val = np.median([row[pos] for row in X_subset])
+            #split on criteria val
+            xl, xr, yl, yr = partition_classes(X=X_subset, y=y, split_attribute=pos, split_val=criteria_val)
+            #information gain
+            new_ig = information_gain(previous_y=y, current_y=[yl, yr])
+            #check if ig is better
+            if new_ig > ig:
+                ig = new_ig
+                split_attribute = col
+                split_value = criteria_val
+                X_left = xl
+                X_right = xr
+                y_left = yl
+                y_right = yr
+
+    return (X_left, X_right, y_left, y_right, split_attribute, split_value)
+
+
+
     #############################################

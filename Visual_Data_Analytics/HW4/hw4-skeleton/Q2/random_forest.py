@@ -43,7 +43,7 @@ class RandomForest(object):
     def __init__(self, num_trees):
         # Initialization done here
         self.num_trees = num_trees
-        self.decision_trees = [DecisionTree(max_depth=10) for i in range(num_trees)]
+        self.decision_trees = [DecisionTree(max_depth=20) for i in range(num_trees)]
         
     def _bootstrapping(self, XX, n):
         # Reference: https://en.wikipedia.org/wiki/Bootstrapping_(statistics)
@@ -58,13 +58,21 @@ class RandomForest(object):
         ### Implement your code here
         #############################################
             
-        pass
+        #get # of observations in XX and create a list of vals 0 - N
+        n_obvservation = range(len(XX))
+
+        #sample from n_observations for index values
+        sample_idxs = np.random.choice(n_obvservation, size=n, replace=True)
+
+        #get sample and label rows from idxs
+        samples = [XX[idx][:9] for idx in sample_idxs]
+        labels = [XX[idx][-1] for idx in sample_idxs]
         #############################################
         return (samples, labels)
 
     def bootstrapping(self, XX):
         # Initializing the bootstap datasets for each tree
-        for i in range(self.num_trees):
+        for _ in range(self.num_trees):
             data_sample, data_label = self._bootstrapping(XX, len(XX))
             self.bootstraps_datasets.append(data_sample)
             self.bootstraps_labels.append(data_label)
@@ -75,7 +83,8 @@ class RandomForest(object):
         ### Implement your code here
         #############################################
         
-        pass
+        for pos, tree in enumerate(self.decision_trees):
+            tree.learn(X=self.bootstraps_datasets[pos], y=self.bootstraps_labels[pos], depth=5)
         #############################################
 
     def voting(self, X):
@@ -120,7 +129,7 @@ class RandomForest(object):
         """
         ### Implement your code here
         #############################################
-        return 'gburdell3'
+        return 'ksims35'
         #############################################
 
 
@@ -154,7 +163,7 @@ def main():
 
     # TODO: Initialize according to your implementation
     # VERY IMPORTANT: Minimum forest_size should be 10
-    forest_size = 10
+    forest_size = 150
 
     # Initializing a random forest.
     randomForest = RandomForest(forest_size)
