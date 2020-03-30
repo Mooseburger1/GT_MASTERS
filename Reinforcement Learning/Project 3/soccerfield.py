@@ -14,21 +14,77 @@ class SoccerField:
             self.epsilon = epsilon
             self.done = False
             self.status = None
+            self._build_environment()
+
+        def _build_environment(self):
+            self.states = []
+            self.rewards = []
+            self.actions = []
+
+            grid = np.zeros(self.size)
+
+            list_of_actions = [(-1,0), (1,0), (0,1), (0,-1), (0,0)]
+            #Im possesion 0
+            for possession in [0,1]:
+                for row in range(grid.shape[0]):
+                    for column in range(grid.shape[1]):
+
+                        for i in range(2):
+                            for j in range(4):
+
+                                if (row,column) == (i,j):
+                                    continue
+                                else:
+                                    state = [possession, (row,column), (i,j)]
+                                    self.states.append(state)
+                                    #states.append(state)
+
+                                    #check if left side goal and opp has possession - reward should be [-100, 100] - I lose 100 he gains 100 for scoring in my goal
+                                    #or
+                                    #check if left side goal and I have possession - reward should be [-100, 100] - I lose 100 he gains 100 for me scoring in my own goal
+                                    if ((i,j) in [(0,0), (1,0)] and possession == 1) | ((row,column) in [(0,0), (1,0)] and possession == 0):
+                                        reward = [100, -100]
+                                        self.rewards.append(reward)
+                                    #check if right side goal and opp has possession - reward should be [100, -100] - I gain 100 he loses 100 for scoring in his own goal
+                                    #or
+                                    #check if right side goal and I have possession - reward should be [100, -100] - I gain 100 he loses 100 for me scoring in his goal
+                                    elif ((i,j) in [(0,3), (1,3)] and possession == 1) or ((row,column) in [(0,3), (1,3)] and possession==0):
+                                        reward = [-100, 100]
+                                        self.rewards.append(reward)
+                                    #no rewards for anything else
+                                    else:
+                                        reward = [0 , 0]
+                                        self.rewards.append(reward)
+
             
+            
+            for a in list_of_actions:
+                for b in list_of_actions:
+                    action = [b,a]
+                    self.actions.append(action)
+
+        def _check_posession(self, state):
+            if state[0] == 0:
+                self.playerB.possession = True
+                self.playerA.possession = False
+            else:
+                self.playerA.possession = True
+                self.playerB.possession = False
 
 
         def reset_environment(self):
             self.playerA = player()
             self.playerB = player()
 
-            #initialize player A's position on the left side of the field
-            self.playerA.position = (0,1)
+            s0 = [0, (0,2), (0,1)]
+            #initialize player A's position on the right side of the field
+            self.playerA.position = s0[1]
 
-            #initialize player B's position on the right side of the field
-            self.playerB.position = (0,2)
+            #initialize player B's position on the left side of the field
+            self.playerB.position = s0[2]
 
-            #Give player A the ball first
-            self.playerA.possession = True
+            #Give player B the ball first
+            self._check_posession(s0) 
 
             #reset done flag
             self.done = False
@@ -40,9 +96,140 @@ class SoccerField:
             self.playerAReward = 0
             self.playerBReward = 0
 
-        def advance(self):
+        def advance(self, actions):
 
-            #randomly choose who goes first
+            
+
+            
+        
+        def render(self):
+            
+            plt.gcf().set_size_inches(15,8)
+            plt.clf()
+            plt.xlim([-0.5,3.5])
+            plt.ylim([1.5,-0.5])
+            plt.xticks([-0.5, 0.5, 1.5, 2.5, 3.5], color='white')
+            plt.yticks([1.5, 0.5, -0.5], color='white')
+            plt.grid()
+
+            
+            plt.fill_between(x=np.linspace(-0.5,0.5,100), y1=[1.5]*100, y2=[-0.5]*100, color='red')
+            plt.fill_between(x=np.linspace(2.5,3.5,100), y1=[1.5]*100, y2=[-0.5]*100, color='blue')
+            plt.fill_between(x=np.linspace(0.5,2.5,100), y1=[1.5]*100, y2=[-0.5]*100, color='green')
+
+            #plot ball based off of possession
+            if self.playerA.possession:
+                plt.scatter(self.playerA.position[1], self.playerA.position[0], color='white', s=2000, edgecolors='black')
+            elif self.playerB.possession:
+                plt.scatter(self.playerB.position[1], self.playerB.position[0], color='white', s=2000, edgecolors='black')
+            else:
+                plt.text(0, 1.5, 'ERROR - NO ONE HAS BALL', fontsize=25)
+
+
+            #plot player A - shift the letter a little to be centered in the box
+            aa = plt.text(self.playerA.position[1]-0.03, self.playerA.position[0]+0.03, 'A', fontsize=25, color='purple', weight=200)
+            aa.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+
+            #plot player B - shift the letter a little to be centered in the box
+            bb=plt.text(self.playerB.position[1]-0.03, self.playerB.position[0]+0.03, 'B', fontsize=25, color='orange', weight=200)
+            bb.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+
+            #plot player A's score
+            a = plt.text (-0.5, -0.6, 'Player A: {}'.format(self.playerAScore), fontsize=20, weight=1000, color='purple')
+            a.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+            #plot player B's score
+            b = plt.text(3, -0.6, 'Player B: {}'.format(self.playerBScore), fontsize=20, color='orange', weight=1000)
+            b.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+
+
+            if self.status != None:
+                t= plt.title(self.status, fontsize=50, weight=1000, color='white')
+                t.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+            plt.show(block=False)
+            plt.pause(0.001)
+            
+            self.status = None
+
+
+class player:
+    def __init__(self, epsilon=0.001):
+        #storing position on the field
+        self.position = None
+        #attribute boolean for having possession of the ball
+        self.possession = False
+
+        self.epsilon = epsilon
+
+        self.actions = {'N':(0, (-1, 0)),        #North is a lower index so subtract
+           'S':(1, (1,0)),                       #South is a higher index so add
+           'E':(2, (0,1)),                       #East moves one column to the right so add 1
+           'W':(3, (0,-1)),                      #West moves one column to the left so sub 1
+           'stick': (4, (0,0))}                  #Stick doesn't move anywher
+
+    def choose_action(self):
+        # if np.random.random() < self.epsilon:
+        
+        move = np.random.choice(list(self.actions.keys()))
+        action = self.actions[move]
+        # else:
+        #     state = np.array([observation])
+        #     actions = self.q_eval.predict(state)
+
+        #     action = np.argmax(actions)
+
+        return action
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#randomly choose who goes first
             choice = np.random.choice([0,1])
             
             #Choice 0 means A goes first
@@ -266,86 +453,6 @@ class SoccerField:
 
             print('Player {} move check: '.format(player), move_check)
             return move_check
-
-            
-        
-        def render(self):
-            
-            plt.gcf().set_size_inches(15,8)
-            plt.clf()
-            plt.xlim([-0.5,3.5])
-            plt.ylim([1.5,-0.5])
-            plt.xticks([-0.5, 0.5, 1.5, 2.5, 3.5], color='white')
-            plt.yticks([1.5, 0.5, -0.5], color='white')
-            plt.grid()
-
-            
-            plt.fill_between(x=np.linspace(-0.5,0.5,100), y1=[1.5]*100, y2=[-0.5]*100, color='red')
-            plt.fill_between(x=np.linspace(2.5,3.5,100), y1=[1.5]*100, y2=[-0.5]*100, color='blue')
-            plt.fill_between(x=np.linspace(0.5,2.5,100), y1=[1.5]*100, y2=[-0.5]*100, color='green')
-
-            #plot ball based off of possession
-            if self.playerA.possession:
-                plt.scatter(self.playerA.position[1], self.playerA.position[0], color='white', s=2000, edgecolors='black')
-            elif self.playerB.possession:
-                plt.scatter(self.playerB.position[1], self.playerB.position[0], color='white', s=2000, edgecolors='black')
-            else:
-                plt.text(0, 1.5, 'ERROR - NO ONE HAS BALL', fontsize=25)
-
-
-            #plot player A - shift the letter a little to be centered in the box
-            aa = plt.text(self.playerA.position[1]-0.03, self.playerA.position[0]+0.03, 'A', fontsize=25, color='purple', weight=200)
-            aa.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
-
-            #plot player B - shift the letter a little to be centered in the box
-            bb=plt.text(self.playerB.position[1]-0.03, self.playerB.position[0]+0.03, 'B', fontsize=25, color='orange', weight=200)
-            bb.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
-
-            #plot player A's score
-            a = plt.text (-0.5, -0.6, 'Player A: {}'.format(self.playerAScore), fontsize=20, weight=1000, color='purple')
-            a.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
-            #plot player B's score
-            b = plt.text(3, -0.6, 'Player B: {}'.format(self.playerBScore), fontsize=20, color='orange', weight=1000)
-            b.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
-
-
-            if self.status != None:
-                t= plt.title(self.status, fontsize=50, weight=1000, color='white')
-                t.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
-            plt.show(block=False)
-            plt.pause(0.001)
-            
-            self.status = None
-
-
-class player:
-    def __init__(self, epsilon=0.001):
-        #storing position on the field
-        self.position = None
-        #attribute boolean for having possession of the ball
-        self.possession = False
-
-        self.epsilon = epsilon
-
-        self.actions = {'N':(0, (-1, 0)),        #North is a lower index so subtract
-           'S':(1, (1,0)),                       #South is a higher index so add
-           'E':(2, (0,1)),                       #East moves one column to the right so add 1
-           'W':(3, (0,-1)),                      #West moves one column to the left so sub 1
-           'stick': (4, (0,0))}                  #Stick doesn't move anywher
-
-    def choose_action(self):
-        # if np.random.random() < self.epsilon:
-        
-        move = np.random.choice(list(self.actions.keys()))
-        action = self.actions[move]
-        # else:
-        #     state = np.array([observation])
-        #     actions = self.q_eval.predict(state)
-
-        #     action = np.argmax(actions)
-
-        return action
-
    
 
 
