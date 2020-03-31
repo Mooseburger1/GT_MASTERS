@@ -1,4 +1,5 @@
 import numpy as np
+from collections import OrderedDict
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 
@@ -19,7 +20,7 @@ class SoccerField:
         def _build_environment(self):
             self.states = {}
             self.rewards = []
-            self.actions = []
+            self.actions = OrderedDict()
             counter = 0
             grid = np.zeros(self.size)
 
@@ -56,17 +57,18 @@ class SoccerField:
                                     else:
                                         reward = [0 , 0]
                                         self.rewards.append(reward)
-
+            counter = 0
             for a in list_of_actions:
                 for b in list_of_actions:
                     action = (b,a)
-                    self.actions.append(action)
+                    self.actions[action] = counter
+                    counter+=1
 
 ##################################################################################################
 
         def random_action(self):
             idx  = np.random.randint(low=0, high=len(self.actions))
-            return self.actions[idx]
+            return list(self.actions.keys())[idx]
 
 ##################################################################################################
 
@@ -119,6 +121,14 @@ class SoccerField:
 
 ##################################################################################################
 
+        def state_to_index(self, state):
+            return self.states[state]
+
+        def action_to_index(self, action):
+            return self.actions[action]
+
+##################################################################################################
+
         def reset_environment(self):
             self.playerA = player()
             self.playerB = player()
@@ -149,25 +159,22 @@ class SoccerField:
 
             #current positions
             my_current_position = current_state[1]
-            print('My Current Position: ', my_current_position)
+            
             their_current_position = current_state[2]
-            print('Their Current Position: ', their_current_position)
+            
             #move chosen
             my_move = actions[0]
-            print('My Move: ', my_move)
+            
             their_move = actions[1]
-            print('Their Move: ', their_move)
+            
             #position after move
             my_next_position = self._move_and_check_for_out_of_bounds(current_position=my_current_position, next_move=my_move)
-            print('My Next Position: ', my_next_position)
+            
             their_next_position = self._move_and_check_for_out_of_bounds(current_position=their_current_position, next_move=their_move)
-            print('Their Next Position: ', their_next_position)
-
+            
             #flip to see who moves first - 0 they go first - 1 i go first
             coin_flip = np.random.choice((0,1), size=1)[0]
 
-            print('Same spot on next move: ', (my_next_position == their_next_position))
-            print('Coin Toss Winner: ', coin_flip)
             #if I have ball and move first - I keep ball and move - you stay
             if my_next_position == their_next_position and self.playerA.possession and coin_flip:
                 their_next_position = their_current_position
@@ -179,7 +186,6 @@ class SoccerField:
 
             #if you have ball and move first - you keep ball and move - I stay
             elif my_next_position == their_next_position and self.playerB.possession and not coin_flip:
-                print('THIS IS MY CURRENT POSITION: ',my_current_position)
                 my_next_position = my_current_position
 
             #if you don't have ball and move first - You get ball and move - I stay and lose ball
@@ -189,20 +195,17 @@ class SoccerField:
 
             #if all these fail - then it is safe to perform move step
             else:
-                
                 pass
 
 
             next_state = (self._get_current_posession(), my_next_position, their_next_position)
-            print('Next State: ', next_state)
             
             reward = self.rewards[self.states[next_state]]
-            print('Reward: ', reward)
 
             #if reward contains 100 or -100, then someone scored and game is over - return done flag set to true
             if 100 in reward:
                 self.done = True
-            print('Done: ', self.done)
+
             #update positions and score attributes for plotting
             self.playerA.position = my_next_position
             self.playerB.position = their_next_position
@@ -227,10 +230,11 @@ class SoccerField:
 
             return (next_state, reward, self.done)
 
+################################################################################################################################
 
         def render(self):
             
-            plt.gcf().set_size_inches(15,8)
+            plt.gcf().set_size_inches(10,5)
             plt.clf()
             plt.xlim([-0.5,3.5])
             plt.ylim([1.5,-0.5])
@@ -261,21 +265,22 @@ class SoccerField:
             bb.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
 
             #plot player A's score
-            a = plt.text (-0.5, 1.6, 'Player A: {}'.format(self.playerAScore), fontsize=20, weight=1000, color='purple')
+            a = plt.text (-0.5, 1.6, 'Player A: {}'.format(self.playerAScore), fontsize=15, weight=1000, color='purple')
             a.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
             #plot player B's score
-            b = plt.text(2.8, 1.6, 'Player B: {}'.format(self.playerBScore), fontsize=20, color='orange', weight=1000)
+            b = plt.text(2.8, 1.6, 'Player B: {}'.format(self.playerBScore), fontsize=15, color='orange', weight=1000)
             b.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
 
 
             if self.status != None:
-                t= plt.title(self.status, fontsize=40, weight=1000, color='white')
+                t= plt.title(self.status, fontsize=30, weight=1000, color='white')
                 t.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
             plt.show(block=False)
             plt.pause(0.001)
             
             self.status = None
 
+#####################################################################################################################
 
 class player:
     def __init__(self):
