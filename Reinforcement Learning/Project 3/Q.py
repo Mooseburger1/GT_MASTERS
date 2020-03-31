@@ -65,14 +65,14 @@ for T in range(n_iter):
         alpha = alpha - alpha_decayrate
     ERR.append(np.abs(Q1[s0, 4] - q_sa))
     # print np.abs(Q1[s0, 4] - q_sa)
-    print T
+    print(T)
 
 # for i in range(len(ERR)):
 #     print ERR[i]
 # # print ERR
 #
 
-print Q1
+print(Q1)
 
 plt.plot(ERR)
 plt.ylim([0,.5])
