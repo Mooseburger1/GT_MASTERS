@@ -46,6 +46,7 @@ for T in range(n_iter):
         # Q2[s,a2] = (1 - alpha) * Q2[s,a2] + alpha * ((1. - gamma) * r2 + gamma * Q2[s_prime,:].max())
 
         Q1[s, a1] = Q1[s, a1] + alpha * (r1 + gamma * Q1[s_prime, :].max() - Q1[s, a1])
+        
         Q2[s, a2] = Q2[s, a2] + alpha * (r2 + gamma * Q2[s_prime, :].max() - Q2[s, a2])
         # update s
         s = s_prime
@@ -64,15 +65,15 @@ for T in range(n_iter):
     if alpha > .001:
         alpha = alpha - alpha_decayrate
     ERR.append(np.abs(Q1[s0, 4] - q_sa))
-    # print np.abs(Q1[s0, 4] - q_sa)
-    print(T)
+    print( np.abs(Q1[s0, 4] - q_sa))
+    #print(T)
 
 # for i in range(len(ERR)):
 #     print ERR[i]
 # # print ERR
 #
 
-print(Q1)
+#print(Q1)
 
 plt.plot(ERR)
 plt.ylim([0,.5])

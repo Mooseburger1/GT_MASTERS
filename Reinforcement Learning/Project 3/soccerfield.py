@@ -3,7 +3,7 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 
-np.random.seed(2)
+np.random.seed(42)
 
 
 class SoccerField:
@@ -15,6 +15,7 @@ class SoccerField:
             self.reset_environment()
             self.done = False
             self.status = None
+            self.status2 = None
             
 
         def _build_environment(self):
@@ -25,7 +26,7 @@ class SoccerField:
             grid = np.zeros(self.size)
 
             list_of_actions = [(-1,0), (1,0), (0,1), (0,-1), (0,0)]
-            #Im possesion 1
+            #Im possesion 0
             for possession in [0,1]:
                 for row in range(grid.shape[0]):
                     for column in range(grid.shape[1]):
@@ -44,13 +45,13 @@ class SoccerField:
                                     #check if left side goal and opp has possession - reward should be [-100, 100] - I lose 100 he gains 100 for scoring in my goal
                                     #or
                                     #check if left side goal and I have possession - reward should be [-100, 100] - I lose 100 he gains 100 for me scoring in my own goal
-                                    if ((i,j) in [(0,0), (1,0)] and possession == 0) | ((row,column) in [(0,0), (1,0)] and possession == 1):
+                                    if ((i,j) in [(0,0), (1,0)] and possession == 1) | ((row,column) in [(0,0), (1,0)] and possession == 0):
                                         reward = [100, -100]
                                         self.rewards.append(reward)
                                     #check if right side goal and opp has possession - reward should be [100, -100] - I gain 100 he loses 100 for scoring in his own goal
                                     #or
                                     #check if right side goal and I have possession - reward should be [100, -100] - I gain 100 he loses 100 for me scoring in his goal
-                                    elif ((i,j) in [(0,3), (1,3)] and possession == 0) or ((row,column) in [(0,3), (1,3)] and possession==1):
+                                    elif ((i,j) in [(0,3), (1,3)] and possession == 1) or ((row,column) in [(0,3), (1,3)] and possession==0):
                                         reward = [-100, 100]
                                         self.rewards.append(reward)
                                     #no rewards for anything else
@@ -64,6 +65,8 @@ class SoccerField:
                     self.actions[action] = counter
                     counter+=1
 
+            self.arrows = {(0,0): '--', (-1,0): '↑', (1,0):'↓', (0,1):'→', (0,-1):'←'}
+
 ##################################################################################################
 
         def random_action(self):
@@ -73,7 +76,7 @@ class SoccerField:
 ##################################################################################################
 
         def _check_posession(self, state):
-            if state[0] == 0:
+            if state[0] == 1:
                 self.playerB.possession = True
                 self.playerA.possession = False
             else:
@@ -86,9 +89,9 @@ class SoccerField:
             elif self.playerB.possession == False and self.playerA.possession == False:
                 raise ValueError("There's an error in possession logic - neither player has possession")
             elif self.playerB.possession:
-                return 0
-            elif self.playerA.possession:
                 return 1
+            elif self.playerA.possession:
+                return 0
 
         def _swap_possession(self):
 
@@ -133,7 +136,7 @@ class SoccerField:
             self.playerA = player()
             self.playerB = player()
 
-            self.state = (0, (0,2), (0,1))
+            self.state = (1, (0,2), (0,1))
             #initialize player A's position on the right side of the field
             self.playerA.position = self.state[1]
 
@@ -146,14 +149,123 @@ class SoccerField:
             #reset done flag
             self.done = False
 
+            #initial actions
+            self.moves = ((0,0), (0,0))
+
             #reset scores
             self.playerAScore = 0
             self.playerBScore = 0
 
 ##################################################################################################
-
         def advance(self, actions):
+            
+            self.moves = actions
+
+            playerA_move = actions[0]
+            playerB_move = actions[1]
+
+            current_state = self.state
+
+            playerA_curr = current_state[1]
+            playerB_curr = current_state[2]
+
+            playerA_next = self._move_and_check_for_out_of_bounds(current_position=playerA_curr, next_move=playerA_move)
+            playerB_next = self._move_and_check_for_out_of_bounds(current_position=playerB_curr, next_move=playerB_move)
+
+
+            coin_flip = np.random.randint(2)
+            #if 1 A goes first
+            if coin_flip:
+                #print('PLAYER A IS MOVING FIRST')
+                self._step(first=(playerA_curr, playerA_next, self.playerA), second=(playerB_curr, playerB_next, self.playerB))
+            else:
+                #print('PLAYER B IS MOVING FIRST')
+                self._step(first=(playerB_curr, playerB_next, self.playerB), second=(playerA_curr, playerA_next, self.playerA))
+
+
+            next_state = (self._get_current_posession(), self.playerA.position, self.playerB.position)
+            
+            reward = self.rewards[self.states[next_state]]
+
+            #if reward contains 100 or -100, then someone scored and game is over - return done flag set to true
+            if 100 in reward:
+                self.done = True
+
+            #update positions and score attributes for plotting
+            self.playerAScore = reward[0]
+            self.playerBScore = reward[1]
+
+            if coin_flip:
+                self.status2 = 'Player A moved first'
+            else:
+                self.status2 = 'Player B moved first'
+
+            if reward[0] == -100 and self.playerA.possession:
+                self.status = 'GAME OVER - A SCORED IN OWN GOAL'
+            elif reward[0] == -100 and self.playerB.possession:
+                self.status = 'GAME OVER - B SCORED IN A GOAL'
+            elif reward[0] == 100 and self.playerA.possession:
+                self.status = 'GAME OVER - A SCORED IN B GOAL'
+            elif reward[0] == 100 and self.playerB.possession:
+                self.status = 'GAME OVER - B SCORED IN OWN GOAL'
+            else:
+                pass
+
+            #update current state tracking
+            self.state = next_state
+
+
+
+            return (next_state, reward, self.done)
+
+
+
+        def _step(self, first, second):
+
+            p1_start = first[0]
+            #print('player 1 is at {}'.format(p1_start))
+            p1_end = first[1]
+            #print('player 1 is trying to get to {}'.format(p1_end))
+            p1 = first[2]
+
+            p2_start = second[0]
+            #print('player 2 is at {}'.format(p2_start))
+            p2_end = second[1]
+            #print('player 2 is trying to get to {}'.format(p2_end))
+            p2 = second[2]
+
+            if p1_end != p2_start:
+                p1.position = p1_end
+                #print('player 1 if clear to move to next spot {}'.format(p1.position))
+            else:
+                p1.position = p1_start
+                p1.possession = False
+                p2.possession = True
+                #print('player 1 is going to run into player 2 - player 1 will stay at {}'.format(p1.position))
+                #print('player 1 current ball state (should not have ball) {}'.format(p1.possession))
+                #print('player 2 current ball state (should have ball) {}'.format(p2.possession))
+
+
+            if p2_end != p1.position:
+                p2.position = p2_end
+                #print('player 2 is clear to move to next spot {}'.format(p2.position))
+            else:
+                p2.position = p2_start
+                p2.possession = False
+                p1.possession = True
+                #print('player 2 is going to run into player 1 - player 2 will stay at {}'.format(p2.position))
+                #print('player 2 current ball state (should not have ball) {}'.format(p2.possession))
+                #print('player 1 current ball state (should have ball) {}'.format(p1.possession))
+            
+            #print('\n')
+##################################################################################################
+        
+
+        def advance2(self, actions):
             #actions = (my_move, their_move)
+
+            #this is only for rendering
+            self.moves = actions
             
             current_state = self.state
 
@@ -175,28 +287,78 @@ class SoccerField:
             #flip to see who moves first - 0 they go first - 1 i go first
             coin_flip = np.random.choice((0,1), size=1)[0]
 
+            ######################### LOGIC FOR MOVING TO THE SAME SPOT ####################################
+
             #if I have ball and move first - I keep ball and move - you stay
             if my_next_position == their_next_position and self.playerA.possession and coin_flip:
-                their_next_position = their_current_position
+                #unless I'm moving into your spot you're are already in - then I stay AND lose ball
+                if their_next_position == their_current_position:
+                    my_next_position = my_current_position
+                    self._swap_possession()
+                #do what I said at first
+                else:
+                    their_next_position = their_current_position
 
             #if I don't have ball and move first - I get ball and move - you stay and lose ball
             elif my_next_position == their_next_position and self.playerB.possession and coin_flip:
-                their_next_position = their_current_position
-                self._swap_possession()
+                #Unless I'm moving into your spot you're already in - then I stay BUT get the ball
+                if their_next_position == their_current_position:
+                    my_next_position = my_current_position
+                    self._swap_possession()
+                #do what I said at first
+                else:
+                    their_next_position = their_current_position
+                    self._swap_possession()
 
             #if you have ball and move first - you keep ball and move - I stay
             elif my_next_position == their_next_position and self.playerB.possession and not coin_flip:
-                my_next_position = my_current_position
+                #Unless you are moving into my spot I'm already in - then you stay AND lose the ball
+                if my_next_position == my_current_position:
+                    their_next_position = their_current_position
+                    self._swap_possession()
+                #do what I said at first
+                else:
+                    my_next_position = my_current_position
 
             #if you don't have ball and move first - You get ball and move - I stay and lose ball
             elif my_next_position == their_next_position and self.playerA.possession and not coin_flip:
-                my_next_position = my_current_position
-                self._swap_possession()
+                #Unless you are moving into my spot I'm already in - then you stay BUT get the ball
+                if my_next_position == my_current_position:
+                    their_next_position = their_current_position
+                    self._swap_possession()
+                #do what I said at first
+                else:
+                    my_next_position = my_current_position
+                    self._swap_possession()
 
             #if all these fail - then it is safe to perform move step
             else:
                 pass
 
+
+            #################### LOGIC FOR BUMPING INTO EACH OTHER ##################################
+
+            #CHECK FOR A BUMP - IF I'M GOING WHERE YOU CURRENTLY ARE AND YOU ARE GOING WHER I'M CURRENTLY AT, WE BUMP 
+            #IF I HAVE BALL AND GO FIRST - NOTHING HAPPENS
+            if my_next_position == their_current_position and their_next_position == my_current_position and coin_flip and self.playerA.possession:
+                my_next_position = my_current_position
+                their_next_position = their_current_position
+            #HOWEVER IF I HAVE BALL AND GO SECOND - SWAP POSSESSION
+            elif my_next_position == their_current_position and their_next_position == my_current_position and not coin_flip and self.playerA.possession:
+                my_next_position = my_current_position
+                their_next_position = their_current_position
+                self._swap_possession()
+            #IF YOU HAVE BALL AND GO FIRST - NOTHING HAPPENS
+            elif my_next_position == their_current_position and their_next_position == my_current_position and not coin_flip and self.playerB.possession:
+                my_next_position = my_current_position
+                their_next_position = their_current_position
+            #HOWEVER IF YOU HAVE BALL AND GO SECOND - SWAP POSSESSION
+            elif my_next_position == their_current_position and their_next_position == my_current_position and coin_flip and self.playerB.possession:
+                my_next_position = my_current_position
+                their_next_position = their_current_position
+                self._swap_possession()
+            else:
+                pass
 
             next_state = (self._get_current_posession(), my_next_position, their_next_position)
             
@@ -224,13 +386,133 @@ class SoccerField:
                 pass
 
             #update current state tracking
-            self.state = next_state
+            self.state = np.copy(next_state)
 
 
 
             return (next_state, reward, self.done)
 
 ################################################################################################################################
+
+        def advance3(self, actions):
+            #actions = (my_move, their_move)
+
+            #this is only for rendering
+            self.moves = actions
+            
+            current_state = self.state
+
+            #current positions
+            my_current_position = current_state[1]
+            
+            their_current_position = current_state[2]
+            
+            #move chosen
+            my_move = actions[0]
+            
+            their_move = actions[1]
+            
+            #position after move
+            my_next_position = self._move_and_check_for_out_of_bounds(current_position=my_current_position, next_move=my_move)
+            
+            their_next_position = self._move_and_check_for_out_of_bounds(current_position=their_current_position, next_move=their_move)
+            
+            #flip to see who moves first - 0 they go first - 1 i go first
+            coin_flip = np.random.choice((0,1), size=1)[0]
+
+            ######################### LOGIC FOR MOVING TO THE SAME SPOT ####################################
+
+            ###### I MOVE FIRST #####
+            #if i move first with ball and bump into your current location i lose ball and stay
+            if my_next_position == their_current_position and coin_flip and self.playerA.possession:
+                my_next_position = my_current_position
+                self._swap_possession()
+            
+            #if i move first without ball and bump into your current location I stay
+            elif my_next_position == their_current_position and coin_flip and self.playerB.possession:
+                my_next_position = my_current_position
+
+            #otherwise it is clear to move
+            else:
+                pass
+
+            ###### THEY MOVE FIRST #####
+            #if they move first with ball and bump into my current location they lose ball and stay
+            if their_next_position == my_current_position and not coin_flip and self.playerB.possession:
+                their_next_position = their_current_position
+                self._swap_possession()
+            #if they move first without ball and bump into my current location they stay
+            elif their_next_position == my_current_position and not coin_flip and self.playerA.possession:
+                their_next_position = their_current_position
+            #otherwise it is clear for them to move
+            else:
+                pass
+            
+
+            ###### I MOVE SECOND #######
+            #if i move second with ball and bump into their next location I lose ball and stay
+            if my_next_position == their_next_position and not coin_flip and self.playerA.possession:
+                my_next_position = my_current_position
+                self._swap_possession()
+
+            #if i move second without ball and bump into their next location I stay
+            elif my_next_position == their_next_position and not coin_flip and self.playerB.possession:
+                my_next_position = my_current_position
+
+            #otherwise it is free to move
+            else:
+                pass
+
+            ###### THEY MOVE SECOND ######
+            #if they move second with ball and bump into my next location they lose ball and stay
+            if their_next_position == my_next_position and coin_flip and self.playerB.possession:
+                their_next_position = their_current_position
+                self._swap_possession()
+
+            #if they move second without ball and bump into my next location they stay
+            elif their_next_position == my_next_position and coin_flip and self.playerA.possession:
+                their_next_position = their_current_position
+
+            #otherwise it is free to move
+            else:
+                pass
+
+            next_state = (self._get_current_posession(), my_next_position, their_next_position)
+            
+            reward = self.rewards[self.states[next_state]]
+
+            #if reward contains 100 or -100, then someone scored and game is over - return done flag set to true
+            if 100 in reward:
+                self.done = True
+
+            #update positions and score attributes for plotting
+            self.playerA.position = my_next_position
+            self.playerB.position = their_next_position
+            self.playerAScore = reward[0]
+            self.playerBScore = reward[1]
+
+            if coin_flip:
+                self.status2 = 'Player A moved first'
+            else:
+                self.status2 = 'Player B moved first'
+
+            if reward[0] == -100 and self.playerA.possession:
+                self.status = 'GAME OVER - A SCORED IN OWN GOAL'
+            elif reward[0] == -100 and self.playerB.possession:
+                self.status = 'GAME OVER - B SCORED IN A GOAL'
+            elif reward[0] == 100 and self.playerA.possession:
+                self.status = 'GAME OVER - A SCORED IN B GOAL'
+            elif reward[0] == 100 and self.playerB.possession:
+                self.status = 'GAME OVER - B SCORED IN OWN GOAL'
+            else:
+                pass
+
+            #update current state tracking
+            self.state = next_state
+
+
+
+            return (next_state, reward, self.done)
 
         def render(self):
             
@@ -265,19 +547,32 @@ class SoccerField:
             bb.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
 
             #plot player A's score
-            a = plt.text (-0.5, 1.6, 'Player A: {}'.format(self.playerAScore), fontsize=15, weight=1000, color='purple')
+            a = plt.text (2.8, 1.6, 'Player A: {}'.format(self.playerAScore), fontsize=15, weight=1000, color='purple')
             a.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
             #plot player B's score
-            b = plt.text(2.8, 1.6, 'Player B: {}'.format(self.playerBScore), fontsize=15, color='orange', weight=1000)
+            b = plt.text(-0.5, 1.6, 'Player B: {}'.format(self.playerBScore), fontsize=15, color='orange', weight=1000)
             b.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+
+            #plot player A's move
+            aarrow = plt.text (2.0, 1.6, self.arrows[self.moves[0]], fontsize=25, color='purple', weight=1000)
+            aarrow.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+
+            #plot player B's move
+            barrow = plt.text(1, 1.6, self.arrows[self.moves[1]], fontsize=25, color='orange', weight=1000)
+            barrow.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
 
 
             if self.status != None:
                 t= plt.title(self.status, fontsize=30, weight=1000, color='white')
                 t.set_path_effects([path_effects.Stroke(linewidth=3, foreground='black'), path_effects.Normal()])
+
+            if self.status2 != None:
+                move = plt.text(1.0, 1.7, self.status2, fontsize=15, weight=500, color='k')
             plt.show(block=False)
             plt.pause(0.001)
             
+            
+
             self.status = None
 
 #####################################################################################################################
@@ -288,283 +583,3 @@ class player:
         self.position = None
         #attribute boolean for having possession of the ball
         self.possession = False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# #randomly choose who goes first
-#             choice = np.random.choice([0,1])
-            
-#             #Choice 0 means A goes first
-#             if choice == 0:
-#                 cardinal, direction = self.playerA.choose_action()
-#                 move_check = self._validate_move(direction=direction, player='A')
-#                 self.update_board(move_check, 'A')
-
-#                 cardinal, direction = self.playerB.choose_action()
-#                 move_check = self._validate_move(direction=direction, player='B')
-#                 self.update_board(move_check, 'B')
-
-#             else:
-#                 cardinal, direction = self.playerB.choose_action()
-#                 move_check = self._validate_move(direction=direction, player='B')
-#                 self.update_board(move_check, 'B')
-
-#                 cardinal, direction = self.playerA.choose_action()
-#                 move_check = self._validate_move(direction=direction, player='A')
-#                 self.update_board(move_check, 'A')
-
-#             return self.done
-
-#         def _update_score(self, player):
-#             if player == 'A':
-#                 self.playerAScore = self.playerAScore + self.playerAReward
-#             else:
-#                 self.playerBScore = self.playerBScore + self.playerBReward
-
-
-#         def update_board(self, move_check, player):
-            
-
-#             booleans = [v for k,v in move_check.items() if k != 'next_pos']
-
-
-#             #if all checks are false, it is safe to update the player
-#             if not any(booleans) and player=='A':
-#                 self.playerA.position = move_check['next_pos']
-#                 self.playerAReward = 0
-#                 self._update_score(player='A')
-#                 return
-#             elif not any(booleans) and player=='B':
-#                 self.playerB.position = move_check['next_pos']
-#                 self.playerBReward = 0
-#                 self._update_score(player='B')
-#                 return
-#             else:
-#                 pass
-
-#             #check if the player went out of bounds
-#             if player=='A' and move_check['out_of_bounds']:
-#                 self.playerAReward = 0
-#                 self._update_score(player='A')
-#                 #do nothing
-#                 return
-#             elif player=='B' and move_check['out_of_bounds']:
-#                 self.playerBReward = 0
-#                 self._update_score(player='B')
-#                 #do nothing
-#                 return
-#             else:
-#                 pass
-
-#             #check if own goal with the ball
-#             if player=='A' and move_check['own_goal']:
-#                 print('Player A Went Into His Goal!!!')
-#                 if self.playerA.possession:
-#                     self.playerA.position = move_check['next_pos']
-#                     self.playerAReward = -100
-#                     self._update_score(player='A')
-#                     self.done = True
-#                     return
-#                 #if he doesn't have the ball - it's ok to move and games not over
-#                 else:
-#                     self.playerA.position = move_check['next_pos']
-#                     self.playerAReward = 0
-#                     self._update_score(player='A')
-#                     return
-
-#             elif player=='B' and move_check['own_goal']:
-#                 print('Player B Went Into His Goal!!!')
-#                 if self.playerB.possession:
-#                     self.playerB.position = move_check['next_pos']
-#                     self.playerBReward = -100
-#                     self._update_score(player='B')
-#                     self.done = True
-#                     return
-#                 else:
-#                     self.playerB.position = move_check['next_pos']
-#                     self.playerBReward = 0
-#                     self._update_score(player='B')
-#                     return
-
-#             else: 
-#                 pass
-
-
-#             #check if opp goal with the ball
-#             if player=='A' and move_check['opp_goal']:
-#                 if self.playerA.possession:
-#                     print('Player A Scored!!!!!')
-#                     self.playerA.position = move_check['next_pos']
-#                     self.playerAReward = 100
-#                     self._update_score(player='A')
-#                     self.done = True
-#                     return
-#                 #if he doesn't have the ball - it's ok to move and games not over
-#                 else:
-#                     self.playerAReward = 0
-#                     self._update_score(player='A')
-#                     self.playerA.position = move_check['next_pos']
-#                     return
-
-#             elif player=='B' and move_check['opp_goal']:
-#                 if self.playerB.possession:
-#                     print('Player B Scored')
-#                     self.playerB.position = move_check['next_pos']
-#                     self.playerBReward = 100
-#                     self._update_score(player='B')
-#                     self.done = True
-#                     return
-#                 else:
-#                     self.playerB.position = move_check['next_pos']
-#                     self.playerBReward = 0
-#                     self._update_score(player='B')
-#                     return
-
-#             else: 
-#                 pass
-
-#             #check if moving into opponent's grid with ball
-#             if player == 'A' and move_check['occupied']:
-#                 if self.playerA.possession:
-#                     self.playerB.possession = True
-#                     self.playerA.possession = False
-#                     self.playerAReward = -10
-#                     self._update_score(player='A')
-#                     return
-#                 else:
-#                     #do nothing
-#                     return
-#             elif player == 'B' and move_check['occupied']:
-#                 if self.playerB.possession:
-#                     self.playerA.possession = True
-#                     self.playerB.possession = False
-#                     self.playerBReward = -10
-#                     self._update_score(player='B')
-#                     return
-#                 else:
-#                     #do nothing
-#                     return
-
-
-
-
-
-#         def _validate_move(self, direction, player):
-
-#             occupied = False
-#             out_of_bounds = False
-#             own_goal = False
-#             opp_goal = False
-            
-
-#             A_goal = [(0,0), (1,0)]
-#             B_goal = [(0,3), (1,3)]
-
-#             if player == 'A':
-                
-#                 curr_pos = self.playerA.position
-#                 print('PlayerAs current location: ', curr_pos)
-#                 check_pos = self.playerB.position
-#                 print('PlayerBs current location: ', check_pos)
-#             else:
-                
-#                 curr_pos = self.playerB.position
-#                 print('PlayerBs current location: ', curr_pos)
-#                 check_pos = self.playerA.position
-#                 print('PlayerAs current location: ', check_pos)
-
-            
-#             next_pos = (curr_pos[0] + direction[0] , curr_pos[1] + direction[1])
-
-#             #check if the players move puts him in the opponents space
-#             if next_pos == check_pos:
-#                 print('Next move puts player {} in opponents space'.format(player))
-#                 occupied = True
-
-#             #check if the players move puts him outside the grid
-#             if next_pos[0] > self.size[0]-1 or next_pos[0] < 0 \
-#                 or next_pos[1] > self.size[1]-1 or next_pos[1] < 0:
-#                 print('Next move puts player {} outside of the field'.format(player))
-#                 out_of_bounds = True
-            
-#             #check if the players move puts him in a goal
-#             if next_pos in A_goal and player == 'A':
-#                 print('Next move puts player A in own goal')
-#                 own_goal = True
-
-#             elif next_pos in B_goal and player == 'A':
-#                 print('Next move puts player A in opponents goal')
-#                 opp_goal = True
-
-#             elif next_pos in A_goal and player == 'B':
-#                 print('Next move puts player B in opponents goal')
-#                 opp_goal = True
-            
-#             elif next_pos in B_goal and player == 'B':
-#                 print('Next move puts player B in own goal')
-#                 own_goal = True
-            
-#             else:
-#                 pass#raise ValueError('BAD LOGIC IN GOAL CHECKING')
-            
-#             move_check = {'occupied':occupied,
-#                     'out_of_bounds':out_of_bounds,
-#                     'own_goal':own_goal,
-#                     'opp_goal':opp_goal,
-#                     'next_pos':next_pos}
-
-#             print('Player {} move check: '.format(player), move_check)
-#             return move_check
-   
-
-
-
-

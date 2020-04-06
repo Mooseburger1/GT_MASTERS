@@ -111,6 +111,7 @@ for T in range(n_iter):
             a2 = actions[np.random.randint(5)]
         else:
             pi1[s] = np.array(findMinQ(Q1[s])) # find min value of dist for me
+           
             # a1 = actions[np.random.choice(primeDista2)]
             pi2[s]= np.array(findMinQ(Q2[s])) # find min value of dist for me
 
@@ -131,9 +132,11 @@ for T in range(n_iter):
 
         # Q1[s, a1, a2] = (1. - alpha) * Q1[s, a1, a2] + alpha * (r1 + gamma * np.min(Q1[s, :, :].sum(axis=0) * primeDista2))
         # Q2[s, a2, a1] = (1. - alpha) * Q2[s, a2, a1] + alpha * (r2 + gamma * np.min(Q2[s, :, :].sum(axis=0) * primeDista1))
-
+        print(Q1[s_prime])
+        sys.exit()
         v1 = pi1[s_prime]* Q1[s_prime]
         v2 = pi2[s_prime]* Q2[s_prime]
+        print(v2.max())
         Q1[s, a1, a2] = (1. - alpha) * Q1[s, a1, a2] + alpha * (r1 + gamma * v1.max())
         Q2[s, a2, a1] = (1. - alpha) * Q2[s, a2, a1] + alpha * (r2 + gamma * v2.max())
 
@@ -156,7 +159,7 @@ for T in range(n_iter):
 
     ERR.append(np.abs(Q1[s_test, 4, 0] - q_sa))
     # print Q1[0]
-    print T
+    # print T
 
 
 # print Q1
