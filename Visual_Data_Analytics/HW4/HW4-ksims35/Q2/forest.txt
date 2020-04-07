@@ -1,0 +1,5 @@
+1.) One would use RF over DT to avoid high variance and overfitting that typically is assoicated with a single DT. It's also prudent to use when model interpretation isn't immediately necessary.
+
+2.) Approximately 1 minute
+
+3.) 72.96%
