@@ -197,7 +197,7 @@ def best_split(X, y):
     
     
     # set m attributes
-    m = int(np.sqrt(d))
+    m = int(d * 0.5)
     
     if m <= 0:
         m = 1
@@ -225,7 +225,7 @@ def best_split(X, y):
                 if new_ig > ig:
                     ig = new_ig
                     split_attribute = col
-                    split_value = cat
+                    split_value = int(cat)
                     X_left = xl
                     X_right = xr
                     y_left = yl
@@ -234,20 +234,27 @@ def best_split(X, y):
         #process logic for continuous col
         else:
             #calculate the mean
-            criteria_val = np.mean(col_of_interest)
-            #split on criteria val
-            xl, xr, yl, yr = partition_classes(X=X, y=y, split_attribute=col, split_val=float(criteria_val))
-            #information gain
-            new_ig = information_gain(previous_y=y, current_y=[yl, yr])
-            #check if ig is better
-            if new_ig > ig:
-                ig = new_ig
-                split_attribute = col
-                split_value = criteria_val
-                X_left = xl
-                X_right = xr
-                y_left = yl
-                y_right = yr
+            #criteria_val = np.mean(col_of_interest)
+
+            max_ = np.max(col_of_interest)
+            min_ = np.min(col_of_interest)
+
+            span = np.linspace(min_, max_, num = 10)
+
+            for val in span:
+                #split on criteria val
+                xl, xr, yl, yr = partition_classes(X=X, y=y, split_attribute=col, split_val=float(val))
+                #information gain
+                new_ig = information_gain(previous_y=y, current_y=[yl, yr])
+                #check if ig is better
+                if new_ig > ig:
+                    ig = new_ig
+                    split_attribute = col
+                    split_value = float(val)
+                    X_left = xl
+                    X_right = xr
+                    y_left = yl
+                    y_right = yr
 
     return (X_left, X_right, y_left, y_right, split_attribute, split_value)
 
