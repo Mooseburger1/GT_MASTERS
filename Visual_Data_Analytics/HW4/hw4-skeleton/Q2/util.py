@@ -93,20 +93,24 @@ def partition_classes(X, y, split_attribute, split_val):
     ### Implement your code here
     #############################################
     
-    #check if split attribute is numeric
-    if isinstance(split_val, (float,int)):
-        assert isinstance(X[0][split_attribute], (float,int)), 'split_val is a numerical criteria, yet a test of the data type on one of the values in the specified column is not numeric'
+    
+    #extract column values
+    col_of_interest = [row[split_attribute] for row in X]
+    #get unique column values
+    col_unique = np.unique(col_of_interest)
+
+    #check if split attribute is categorical
+    if check_categorical(col_unique):
+        
+        #split the data on the specified column (split_attribute) by the specified criteria (split_val)
+        _ = [(X_left.append(row), y_left.append(y[pos])) if row[split_attribute] == split_val else (X_right.append(row), y_right.append(y[pos])) for pos,row in enumerate(X)]
+
+
+    #check if split attribute is not categorical
+    elif isinstance(split_val, float):
 
         #split the data on the specified column (split_attribute) by the specified criteria (split_val)
         _ = [(X_left.append(row), y_left.append(y[pos])) if row[split_attribute] <= split_val else (X_right.append(row), y_right.append(y[pos])) for pos,row in enumerate(X)]
-
-    
-    #check if split attribute is categorical
-    elif isinstance(split_val, str):
-        assert isinstance(X[0][split_attribute], str), 'split_val is a categorical criteria, yet a test of the data type on one of the values in the specified column is not categorical'
-
-        #split the data on the specified column (split_attribute) by the specified criteria (split_val)
-        _ = [(X_left.append(row), y_left.append(y[pos])) if row[split_attribute] == split_val else (X_right.append(row), y_right.append(y[pos])) for pos,row in enumerate(X)]
 
     #No clue what they did
     else:
@@ -190,28 +194,31 @@ def best_split(X, y):
 
     # Num of attributes
     d = len(X[0])
-
+    
+    
     # set m attributes
-    m = int(d/2)
+    m = int(np.sqrt(d))
+    
     if m <= 0:
         m = 1
 
     # choice of m attributes out of d available attributes
     col_idxs = np.random.choice(a=range(d), size=m, replace=False).tolist()
 
-    #subset the data on the randomly chosen columns
-    X_subset = [[row[i] for i in col_idxs] for row in X]
-
     #loop through each column and find best split
-    for pos, col in enumerate(col_idxs):
+    for col in col_idxs:
+        
+        #extract column values
+        col_of_interest = [row[col] for row in X]
+        #get unique column values
+        col_unique = np.unique(col_of_interest)
+
         #process logic for categorical col
-        if isinstance(X_subset[0][pos], str):
-            #get the unique categories
-            categories = np.unique([row[pos] for row in X_subset])
+        if check_categorical(col_unique):
             #loop through each category type and gauge split on it
-            for cat in categories:
+            for cat in col_unique:
                 #split on category
-                xl, xr, yl, yr = partition_classes(X=X_subset, y=y, split_attribute=pos, split_val=cat)
+                xl, xr, yl, yr = partition_classes(X=X, y=y, split_attribute=col, split_val=int(cat))
                 #information gain
                 new_ig = information_gain(previous_y=y, current_y=[yl, yr])
                 #check if ig is better
@@ -225,11 +232,11 @@ def best_split(X, y):
                     y_right = yr
 
         #process logic for continuous col
-        if isinstance(X_subset[0][pos], (float,int)):
-            #calculate the median
-            criteria_val = np.median([row[pos] for row in X_subset])
+        else:
+            #calculate the mean
+            criteria_val = np.mean(col_of_interest)
             #split on criteria val
-            xl, xr, yl, yr = partition_classes(X=X_subset, y=y, split_attribute=pos, split_val=criteria_val)
+            xl, xr, yl, yr = partition_classes(X=X, y=y, split_attribute=col, split_val=float(criteria_val))
             #information gain
             new_ig = information_gain(previous_y=y, current_y=[yl, yr])
             #check if ig is better
@@ -247,3 +254,36 @@ def best_split(X, y):
 
 
     #############################################
+
+
+
+def check_categorical(X):
+    return all(np.logical_and(X.dtype=='int64', X <= 10))
+
+
+
+
+
+if __name__ == '__main__':
+
+    X = [[2.771244718,1.784783929,1, 2],
+        [1.728571309,1.169761413, 1, 3],
+        [3.678319846,2.81281357, 1, 2],
+        [3.961043357,2.61995032, 1, 3],
+        [2.999208922,2.209014212, 1, 3],
+        [7.497545867,3.162953546, 5, 5],
+        [9.00220326,3.339047188, 8, 7],
+        [7.444542326,0.476683375, 10, 6],
+        [10.12493903,3.234550982, 4, 9],
+        [6.642287351,3.319983761, 9, 10]]
+
+    y = [0,0,0,0,0,1,1,1,1,1]
+
+    print('''
+X_left: {}
+X_right: {}
+y_left: {}
+y_right: {}
+split_attribute: {}
+split_value: {}
+    '''.format(*best_split(X,y)))

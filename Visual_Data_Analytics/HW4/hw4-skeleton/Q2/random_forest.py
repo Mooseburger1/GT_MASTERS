@@ -43,7 +43,7 @@ class RandomForest(object):
     def __init__(self, num_trees):
         # Initialization done here
         self.num_trees = num_trees
-        self.decision_trees = [DecisionTree(max_depth=20) for i in range(num_trees)]
+        self.decision_trees = [DecisionTree(max_depth=100) for i in range(num_trees)]
         
     def _bootstrapping(self, XX, n):
         # Reference: https://en.wikipedia.org/wiki/Bootstrapping_(statistics)
@@ -89,7 +89,7 @@ class RandomForest(object):
 
     def voting(self, X):
         y = []
-
+        
         for record in X:
             # Following steps have been performed here:
             #   1. Find the set of trees that consider the record as an
@@ -115,7 +115,7 @@ class RandomForest(object):
                 ### Implement your code here
                 #############################################
                 
-                pass
+                y = np.append(y, 0)
                 #############################################
             else:
                 y = np.append(y, np.argmax(counts))
@@ -163,7 +163,7 @@ def main():
 
     # TODO: Initialize according to your implementation
     # VERY IMPORTANT: Minimum forest_size should be 10
-    forest_size = 150
+    forest_size = 200
 
     # Initializing a random forest.
     randomForest = RandomForest(forest_size)

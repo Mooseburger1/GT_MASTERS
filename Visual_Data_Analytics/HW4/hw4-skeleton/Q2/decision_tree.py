@@ -1,6 +1,7 @@
 import numpy as np 
 import ast
 from util import best_split
+import sys
 
         
         # processing for starting at the stump
@@ -9,7 +10,7 @@ class DecisionTree(object):
         # Initializing the tree as an empty dictionary or list, as preferred
         self.tree = None
         self.max_depth = max_depth
-        self.min_size = 3
+        self.min_size = 20
     
     def learn(self, X, y, par_node = {}, depth=0):
         # TODO: Train the decision tree (self.tree) using the the sample X and labels y
@@ -50,7 +51,7 @@ class DecisionTree(object):
             # left[0], right[0] = X-vals
             # left[1], right[1] = y-vals
             left, right = par_node['left'] , par_node['right']
-           
+            
 
             #No split
             if len(left[0]) == 0 or len(right[0]) == 0:
@@ -64,7 +65,7 @@ class DecisionTree(object):
                 return
 
             
-           
+         
             
             #process left child - check if pure already
             if all(ele == left[1][0] for ele in left[1]):
@@ -75,7 +76,7 @@ class DecisionTree(object):
                 par_node['left'] = self._make_terminal(par_node['left'][1])
 
             #check if there's only 1 attribute
-            elif len(left[0][0]) == 1:
+            elif len(left[0]) == 1:
                 par_node['left'] = self._make_terminal(par_node['left'][1])
   
             #check if depth has been met
@@ -140,6 +141,7 @@ class DecisionTree(object):
                                'left': (right_split[0], right_split[2]),
                                'right': (right_split[1], right_split[3]),
                             }
+                
                 par_node['right'] = right_node
                 self.learn(X=None, y=None, par_node=par_node['right'], depth=depth)
             
@@ -155,7 +157,7 @@ class DecisionTree(object):
         if par_node is None:
             par_node = self.tree
     
-        if record[par_node['split_attr']] < par_node['split_value']:
+        if record[par_node['split_attr']] <= par_node['split_value']:
             if isinstance(par_node['left'], dict):
                 return self.classify(record, par_node['left'])
             else:
@@ -166,3 +168,28 @@ class DecisionTree(object):
             else:
                 return par_node['right']
         #############################################
+
+
+
+if __name__ == '__main__':
+
+    X = [[2.771244718,1.784783929,1, 2],
+        [1.728571309,1.169761413, 1, 3],
+        [3.678319846,2.81281357, 1, 2],
+        [3.961043357,2.61995032, 1, 3],
+        [2.999208922,2.209014212, 1, 3],
+        [7.497545867,3.162953546, 5, 5],
+        [9.00220326,3.339047188, 8, 7],
+        [7.444542326,0.476683375, 10, 6],
+        [10.12493903,3.234550982, 4, 9],
+        [6.642287351,3.319983761, 9, 10]]
+
+    y = [0,0,0,0,0,1,1,1,1,1]
+
+    tree = DecisionTree(max_depth=3)
+
+    tree.learn(X, y)
+
+    print(tree.tree)
+    print(X[0], y[0])
+    print(tree.classify(X[0]))
