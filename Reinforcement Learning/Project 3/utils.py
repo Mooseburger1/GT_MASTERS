@@ -33,33 +33,30 @@ solvers.options['show_progress'] = False
 def solve_maximin(q):
 
     glpksolver = 'glpk'
-    solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}  # cvxopt 1.1.8
-    solvers.options['msg_lev'] = 'GLP_MSG_OFF'  # cvxopt 1.1.7
-    solvers.options['LPX_K_MSGLEV'] = 0  # previous versions
+    solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
+    solvers.options['msg_lev'] = 'GLP_MSG_OFF'
+    solvers.options['LPX_K_MSGLEV'] = 0
 
-    M = matrix(q).trans()
-    n = M.size[1]
+    G = np.vstack((q.T, np.eye(5))) * -1
+    
+    G = np.hstack( (np.ones((10,1)) , G) )
 
+    G[5:, 0] = 0
 
-    A = hstack((ones((M.size[0], 1)), M))
+    G = matrix(G)
     
-    #Constraint: All P > 0
-    eye_matrix = hstack((zeros((n, 1)), -eye(n)))
-    
-    A = vstack((A, eye_matrix))
-    
-    # Constraint: Sum(P) == 1
-    A = matrix(vstack((A, hstack((0,ones(n))), hstack((0,-ones(n))))))
+    A =  matrix([[0.], [1.], [1.], [1.], [1.], [1.]])
    
-    #Create b Matrix
-    b = matrix(hstack((zeros(A.size[0] - 2), [1, -1])))
-    
-    #Create C Matrix
-    c = matrix(hstack(([-1], zeros(n))))
-   
-    sol = solvers.lp(c,A,b, solver=glpksolver)
 
-    return sol['x']#sol['primal objective']
+    h = matrix([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+    b = matrix([1.0])
+    c = matrix([-1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+   
+    sol = solvers.lp(c,G,h,A,b, solver=glpksolver)
+
+    
+    return sol['primal objective'], sol['x']
 
 
 
@@ -122,3 +119,21 @@ def solve_ceq(q1, q2):
     # print("EXPECTED GAME VALUE : {} {}".format(q1_exp_return, q2_exp_return))
 
     return q1_exp_return, q2_exp_return
+
+
+
+
+
+if __name__ == '__main__':
+
+
+    q = np.array([[1., 0.994, 1.59399905, 1.,1. ],
+         [1., 1. , 1. , 0.994 , 1. ],
+         [1. , 0.99400001 ,1. , 1. , 1. ],
+         [1. , 0.99400001 ,1. , 1. , 1.  ],
+         [1. , 1. , 1. , 1. , 0.98780006]])
+
+
+    ans ,probs = solve_maximin(q.T * -1)
+
+    print(ans, list(probs))

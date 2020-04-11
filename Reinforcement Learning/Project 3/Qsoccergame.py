@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import time
 import argparse
+import sys
 
 mpl.rcParams['agg.path.chunksize'] = 10000
 
@@ -11,7 +12,7 @@ mpl.rcParams['agg.path.chunksize'] = 10000
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', '--gamma', dest='gamma', help='gamma', default=0.9)
-parser.add_argument('-a', '--alpha', dest='alpha', help='alpha', default=1.0)
+parser.add_argument('-a', '--alpha', dest='alpha', help='alpha', default=0.5)
 parser.add_argument('-e', '--epsilon', dest='epsilon', help='Epsilon Decay Factor', default=0.2)
 parser.add_argument('-s', '--speed', dest='game_speed', help='Game speed [slow | normal | fast | faster | fastest]', default='normal')
 parser.add_argument('-i', '--iter', dest='iter', help='Number of training iterations', default=1000000)
@@ -24,13 +25,11 @@ ALPHA = float(args.alpha)
 EPSILON = float(args.epsilon)
 GAME_SPEED = args.game_speed
 ITERATIONS = int(args.iter)
-ALPHA_MIN = 0.001
+
 
 assert GAME_SPEED in ('slow', 'normal', 'fast', 'faster', 'fastest'), 'Game speed arguemnt [-s | --speed] can only be [slow | normal | fast | faster | fastest]'
 
 GAME_SPEED = speeds[GAME_SPEED]
-ALPHA_DECAY = (ALPHA - ALPHA_MIN) /ITERATIONS
-
 
 np.random.seed(9611)
 
@@ -54,8 +53,8 @@ if __name__ == '__main__':
     num_actions = len(actions)
 
     #initialize Q tables
-    q1 = np.zeros((num_states, num_actions))
-    q2 = np.zeros((num_states, num_actions))
+    q1 = np.random.rand(num_states, num_actions)
+    q2 = np.random.rand(num_states, num_actions)
 
 
     if GAME_SPEED != 'headless':
@@ -68,7 +67,7 @@ if __name__ == '__main__':
     delta = []
     indices = []
     alphas = []
-    epsilons = []
+
 
     done = True
  
@@ -83,7 +82,7 @@ if __name__ == '__main__':
             s_base = game.state_to_index(game.state)
         
 
-        # guague performance against STICK action and STICK Q Value
+        # guague performance against going south
         base_q = q1[s_base][1]
             
         # get index for state s
@@ -116,20 +115,17 @@ if __name__ == '__main__':
         a1_2_index = np.argmax(q1[state_prime_index])
         a2_2_index = np.argmax(q2[state_prime_index])
 
+        q1[state_index, a1_1_index] = q1[state_index, a1_1_index] + ALPHA * (r1 + GAMMA * q1[state_prime_index, a1_2_index] - q1[state_index, a1_1_index])
 
-        q1[state_index][a1_1_index] = (1 - ALPHA) * q1[state_index][a1_1_index] + \
-                                  ALPHA * ((1 - GAMMA) * r1 + GAMMA * q1[state_prime_index][a1_2_index])
-        
 
         s = s_prime
 
-        # EPSILON = EPSILON* ALPHA_DECAY
-
-        ALPHA -= ALPHA_DECAY
+        ALPHA *= np.e ** (-np.log(500.0) / 10 ** 6)
         alphas.append(ALPHA)
 
         #print(episode, ': ', np.abs(q1[s_init, base_action] - base_q))
-        if state_index == s_base and a1_1_index==1:
+        if state_index == s_base and a1_1_index==1 and iter_ %5 == 0:
+            
             delta.append(np.abs(q1[s_base][1] - base_q))
             #print('Error: ',np.abs(q1[s_init][4] - base_q) )
             indices.append(iter_)

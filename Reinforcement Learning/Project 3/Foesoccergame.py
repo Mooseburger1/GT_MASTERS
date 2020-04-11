@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import time
 import argparse
-from utils import solve_lp
+from utils import solve_lp, solve_maximin
 import sys 
 from cvxopt.modeling import op, variable
 from cvxopt.solvers import options
@@ -61,9 +61,7 @@ if __name__ == '__main__':
     #initialize Q tables
     Q = np.ones((num_states, num_actions, num_actions))
     V1 = np.ones((num_states))
-    PI = np.ones((num_states, num_actions)) / num_actions
-
-    
+    #PI = np.ones((num_states, num_actions)) / num_actions
     #q2 = np.zeros((num_states, num_actions, num_actions))
 
 
@@ -120,15 +118,19 @@ if __name__ == '__main__':
 
         
 
-        Q[state_index, a1_index, a2_index] = (1-ALPHA) * Q[state_index, a1_index, a2_index] + ALPHA * (ra + GAMMA + V1[s_prime_index])
+        Q[state_index, a1_index, a2_index] = (1-ALPHA) * Q[state_index, a1_index, a2_index] + ALPHA * (ra + GAMMA * V1[s_prime_index])
 
+        current_q = copy.deepcopy(Q[s_prime_index].T) * -1
+
+        #v_star , probs = solve_lp(copy.deepcopy(Q[state_index]))
+
+        v_star, probs = solve_maximin(current_q)
+        # print(test)
+        # sys.exit()
         
+        V1[s_prime_index] = v_star
 
-        v_star , probs = solve_lp(copy.deepcopy(Q[state_index]))
-        
-        V1[state_index] = v_star
-
-        PI[state_index] = probs
+        # PI[state_index] = np.squeeze(probs)
 
         ALPHA *= np.e ** (-np.log(500.0) / 10 ** 6)
 
@@ -143,93 +145,15 @@ if __name__ == '__main__':
         s = s_prime
             
 
-    
-    
+    _, probs = solve_maximin( (Q[71]).T * -1 )
+    print((Q[71]))
+    print(probs)
     plt.figure(figsize=(15,8))
     plt.ylim([0, 0.5])
     plt.plot(indices, delta, color='lightslategray')
-    plt.savefig('Foesoccer2.png', bbox_inches='tight')
+    plt.savefig('Foesoccer3.png', bbox_inches='tight')
     plt.show()
     
     plt.figure(figsize=(15,8))
     plt.plot(alphas)
     plt.show()
-
-    # plt.figure(figsize=(15,8))
-    # plt.plot(epsilons)
-    # plt.show()
-            
-
-
-
-            # done = True
- 
-    # for iter_ in range(ITERATIONS):
-        
-    #     if done:
-            
-    #         #reset environment
-    #         game.reset_environment()
-    #         render('NEW GAME')
-    #         #intial state in the form (possession, player-A position, player-B position)
-    #         s = game.state
-    #         s_base = game.state_to_index(game.state)
-        
-
-    #     # guague performance against South action for player A and Stick for Player B
-    #     base_q = (q1[s_base][1][4]).copy()
-            
-    #     # get index for state s
-    #     state_index = game.state_to_index(s)
-    #     current_q = (q1[state_index]).copy()
-    #     a1_1_index = np.random.choice(np.arange(5))
-    #     a1_1 = actions[a1_1_index]
-
-    #     a2_1_index = np.random.choice(np.arange(5))
-    #     a2_1 = actions[a2_1_index]
-
-
-    #     a = (a1_1, a2_1)
-    #     # if iter_ > 15:
-    #     #     input('Action is: {}'.format(a))
-
-    #     s_prime, reward, done = game.advance( a )
-
-    #     render()
-    #     # print('INPUT: \n', q1[state_index])
-        
-    #     # print('OUTPUT: \n', prime_objective)
-    #     # input('enter')
-    #     r1 = reward[0]
-    #     r2 = reward[1]
-
-    #     state_prime_index = game.state_to_index(s_prime)
-
-    #     prime_objective = solve_maximin(current_q)
-        
-
-
-    #     q1[state_index][a1_1_index][a2_1_index] = (1 - ALPHA) * q1[state_index][a1_1_index][a2_1_index] + \
-    #                 ALPHA * ((1 - GAMMA) * r1 + GAMMA * prime_objective)
-        
-    #     s = s_prime
-
-    #     # EPSILON = EPSILON* ALPHA_DECAY
-
-    #     ALPHA = ALPHA * .999999
-    #     alphas.append(ALPHA)
-
-    #     #print(episode, ': ', np.abs(q1[s_init, base_action] - base_q))
-    #     if state_index == s_base and a1_1_index==1 and a2_1_index==4:
-    #         delta.append(np.abs(q1[s_base][1][4] - base_q))
-    #         #print('Error: ',np.abs(q1[s_init][4] - base_q) )
-    #         print(iter_, np.abs(q1[s_base][1][4] - base_q))
-    #         indices.append(iter_)
-
-
-    
-
-
-
-
-            
