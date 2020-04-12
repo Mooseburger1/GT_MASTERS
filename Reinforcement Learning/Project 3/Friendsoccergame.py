@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import time
 import argparse
-import matplotlib.patheffects as path_effects
+import sys
 
 mpl.rcParams['agg.path.chunksize'] = 10000
 
@@ -30,8 +30,6 @@ ITERATIONS = int(args.iter)
 assert GAME_SPEED in ('slow', 'normal', 'fast', 'faster', 'fastest'), 'Game speed arguemnt [-s | --speed] can only be [slow | normal | fast | faster | fastest]'
 
 GAME_SPEED = speeds[GAME_SPEED]
-
-
 
 np.random.seed(9611)
 
@@ -73,7 +71,7 @@ if __name__ == '__main__':
 
     done = True
     for iter_ in range(ITERATIONS):
-        
+        print('Iteration: ', iter_)
         if done:
             #reset environment
             game.reset_environment()
@@ -96,12 +94,7 @@ if __name__ == '__main__':
 
         a2_1_index = np.random.randint(num_actions)
         a2_1 = list(game.actions.keys())[a2_1_index]
-        # else:
-        #     a1_1_index = np.argmax(q1[state_index])
-        #     a1_1 = list(game.actions.keys())[a1_1_index]
-
-        #     a2_1_index = np.argmax(q2[state_index])
-        #     a2_1 = list(game.actions.keys())[a2_1_index]
+     
 
 
         a = (a1_1[0], a2_1[1])
@@ -125,23 +118,12 @@ if __name__ == '__main__':
         else:
             q1[state_index, a_index] = q1[state_index, a_index] + ALPHA * (r1 + GAMMA * 0.0 - q1[state_index, a_index])
         
-  
-
-        
-
 
         s = s_prime
 
 
-
-    
-        # EPSILON = EPSILON* ALPHA_DECAY
-
         ALPHA *= np.e ** (-np.log(500.0) / 10 ** 6)
-        alphas.append(ALPHA)
-        # epsilons.append(EPSILON)
-
-    
+        
 
         
         #print(episode, ': ', np.abs(q1[s_init, base_action] - base_q))
@@ -150,22 +132,23 @@ if __name__ == '__main__':
             delta.append(np.abs(q1[s_base][base_action] - base_q))
             #print('Error: ',np.abs(q1[s_init][4] - base_q) )
             indices.append(iter_)
+            alphas.append(ALPHA)
             
 
 
     plt.figure(figsize=(15,8))
     plt.ylim([0, 0.5])
-    plt.plot(indices, delta, color='dodgerblue')
-    plt.savefig('Freinds.png', bbox_inches='tight')
-    plt.show()
-    
-    plt.figure(figsize=(15,8))
-    plt.plot(alphas)
-    plt.show()
+    plt.plot(indices, delta, color='lightslategray')
+    plt.title('Friend-learner')
+    plt.xlabel('Simulation Iteration')
+    plt.ylabel('Q-value Difference')
 
-    # plt.figure(figsize=(15,8))
-    # plt.plot(epsilons)
-    # plt.show()
+    plt.twinx()
+
+    plt.plot(indices, alphas, color = 'k' , ls='--')
+    plt.ylabel('alpha')
+    plt.savefig('Friends.png', bbox_inches='tight')
+    plt.show()  
             
 
 

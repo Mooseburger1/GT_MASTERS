@@ -72,7 +72,7 @@ if __name__ == '__main__':
     done = True
  
     for iter_ in range(ITERATIONS):
-        
+        print('Iteration: ', iter_)
         if done:
             #reset environment
             game.reset_environment()
@@ -121,7 +121,7 @@ if __name__ == '__main__':
         s = s_prime
 
         ALPHA *= np.e ** (-np.log(500.0) / 10 ** 6)
-        alphas.append(ALPHA)
+        
 
         #print(episode, ': ', np.abs(q1[s_init, base_action] - base_q))
         if state_index == s_base and a1_1_index==1 and iter_ %5 == 0:
@@ -129,21 +129,22 @@ if __name__ == '__main__':
             delta.append(np.abs(q1[s_base][1] - base_q))
             #print('Error: ',np.abs(q1[s_init][4] - base_q) )
             indices.append(iter_)
+            alphas.append(ALPHA)
 
 
     plt.figure(figsize=(15,8))
     plt.ylim([0, 0.5])
     plt.plot(indices, delta, color='lightslategray')
-    plt.savefig('Qsoccer.png', bbox_inches='tight')
-    plt.show()
-    
-    plt.figure(figsize=(15,8))
-    plt.plot(alphas)
-    plt.show()
+    plt.title('Q')
+    plt.xlabel('Simulation Iteration')
+    plt.ylabel('Q-value Difference')
 
-    # plt.figure(figsize=(15,8))
-    # plt.plot(epsilons)
-    # plt.show()
+    plt.twinx()
+
+    plt.plot(indices, alphas, color = 'k' , ls='--')
+    plt.ylabel('alpha')
+    plt.savefig('Qsoccer.png', bbox_inches='tight')
+    plt.show()  
             
 
 
