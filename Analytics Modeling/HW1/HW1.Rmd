@@ -1,0 +1,146 @@
+---
+pdf_document: default
+html_document: default
+html_notebook: default
+output: pdf_document
+title: "HW 1 - Kelly \"Scott\" Sims"
+df_print: paged
+---
+
+**Question 2.1**
+------
+Describe a situation or problem from your job, everyday life, current events, etc., for which a classification model would be appropriate. List some (up to 5) predictors that you might use.
+
+>I have experimented with image detecting machine learning algorithms (CNN - Convolutional Neural Networks). There is a yearly ImageNet object detection competition that supplies terrabytes of labeled images for you to train a machine leanring algorithm on. I created a TensorFlow API algorithm that reads in an image and predicts what the image is (bird, dog, stove or car in this particular project). So the classification metric is a multiclass one in which the classifier predicts either bird, dog, stove, or car. The predictors for this particular classifier are all the same fortunately, and that is pixel intensities. An image is just a matrix of pixel values ranging from 0 to 255. Closer to 0, the darker a pixel is and closer to 255, the brighter a pixel is. Based on the intensities of neighboring pixels, the classifier finds edges. That is all a convolutional neural network is an edge detector. Depending on where these edges are and how bright they are (pixel value), it makes a prediction of one of the 4 classes. The overall image size determines how many predictors there are (pixels). If an image is 300x300, then there are 90,000 predictors that are fed into the model for a grayscale image. If the image is colored, then there are 300x300x3 (3 for RGB, red green and blue channels) or 270,000,000 predictors. My project can be seen on Github Here:
+
+(https://github.com/Mooseburger1/Springboard-Data-Science-Immersive/tree/master/Capstone%202%20Project) 
+
+and
+
+(https://github.com/Mooseburger1/Springboard-Data-Science-Immersive/blob/master/Capstone%202%20Project/Report/Exploring%20Computational%20Efficiency%20in%20Object%20Detection%20with%20Convolutional%20Neural%20Networks.pdf)
+
+
+
+**Question 2.2**
+-----
+The files credit_card_data.txt (without headers) and credit_card_data-headers.txt
+(with headers) contain a dataset with 654 data points, 6 continuous and 4 binary predictor variables. It
+has anonymized credit card applications with a binary response variable (last column) indicating if the
+application was positive or negative. The dataset is the “Credit Approval Data Set” from the UCI Machine
+Learning Repository (https://archive.ics.uci.edu/ml/datasets/Credit+Approval) without the categorical
+variables and without data points that have missing values.
+
+1. Using the support vector machine function *ksvm* contained in the R package *kernlab*, find a good classifier for this data. Show the equation of your classifier, and how well it classifies the data points in the full data set.
+```{r Linear SVM}
+require("kernlab")
+require("caret")
+data <- read.csv("./credit_card_data-headers.csv", header = TRUE)
+X <- as.matrix(data[,1:10])
+y <- as.matrix(data[,11])
+
+C = c(10, 50, 100, 500)
+
+for(i in C){
+cat("For C=", i, "\n")
+model <- ksvm(x = X, y = y, type = "C-svc", kernel = "vanilladot",
+              C = i, scaled = TRUE)
+
+pred <- predict(model, X)
+
+
+percentage <- sum(pred == y) / nrow(X)
+
+
+
+a <- colSums(model@xmatrix[[1]] * model@coef[[1]])
+
+a0 <- -model@b
+
+cat("\nEquation\n")
+cat("----------------------------------------------------------------\n")
+cat(a0,"+",a[1],"+",a[2],"+",a[3],"+",a[4],"+\n",a[5],"+",a[6],"+",a[7],"+",a[8],"+",a[9],"+",a[10])
+
+cat("\n\n")
+print(confusionMatrix(table(pred, y), positive = "1"))
+cat("\n\n")
+}
+```
+
+***Conclusion**
+With the vanilladot kernel SVM classifier, regardless of the value C, it appears that the data is linearly separable at most 86%. Experimenting with values of C ranging from 10 to 500, the accuracy was always about 86%. The y- intercept from all equations was always about 0.08. From all the confusion matrices from each model, we can see that when the True value was 0, the model predicted zero 286 times out of 358. This means it was incorrect 72 times. And when the True value was 1, the model predicted one 279 times out of 296. This means it was incorrect 17 times. A non linear kernel SVM might perform better. Let's do that next.
+
+2. You are welcome, but not required, to try other (nonlinear) kernels as well; we’re not covering
+them in this course, but they can sometimes be useful and might provide better predictions
+than vanilladot.
+```{r Non Linear SVM}
+require("kernlab")
+require("caret")
+data <- read.csv("./credit_card_data-headers.csv", header = TRUE)
+X <- as.matrix(data[,1:10])
+y <- as.matrix(data[,11])
+
+C = c(10, 50, 100, 500)
+
+for(i in C){
+cat("For C=", i, "\n")
+model <- ksvm(x = X, y = y, type = "C-svc", kernel = "rbfdot",
+              C = i, scaled = TRUE)
+
+pred <- predict(model, X)
+
+
+percentage <- sum(pred == y) / nrow(X)
+
+
+
+a <- colSums(model@xmatrix[[1]] * model@coef[[1]])
+
+a0 <- -model@b
+
+cat("\nEquation\n")
+cat("----------------------------------------------------------------\n")
+cat(a0,"+",a[1],"+",a[2],"+",a[3],"+",a[4],"+\n",a[5],"+",a[6],"+",a[7],"+",a[8],"+",a[9],"+",a[10])
+
+cat("\n\n")
+print(confusionMatrix(table(pred, y), positive = "1"))
+cat("\n\n")
+}
+```
+
+***Conclusion**
+Applying the rbf kernel or Radial Basis, the non linear classifier was able to achieve an accuracy of almost **97%** with a C-value of 500. Again looking at the confusion matrix, it misclassified values of 0 only 7 out of 358 observations. Conversely it misclassified values of 1 only 13 out of 296 times. This is a major improvement over the linear SVM
+
+3. Using the k-nearest-neighbors classification function kknn contained in the R kknn package,
+suggest a good value of k, and show how well it classifies that data points in the full data set.
+Don’t forget to scale the data (scale=TRUE in kknn).
+
+```{r KNN}
+require("kknn")
+
+data = read.csv("./credit_card_data-headers.csv", header = TRUE)
+
+accuracy_percentage <- rep(0,20)
+for(j in 1:20){
+      pred = rep(0, nrow(data))
+      for(i in 1:nrow(data)){
+        
+            model <- kknn(R1~., data[-i,], data[i,], k = j, scale = TRUE)
+            pred[i] <- round(fitted(model))
+      
+      }
+      
+      acc <- sum(pred == as.vector(data[,11])) / nrow(data)
+      cat("Finished model with", j, "nearest neightbors......................",(acc*100),"% Accuracy\n")
+      accuracy_percentage[j] = acc
+      
+}
+
+cat("\n\nBest performing model is model", which.max(accuracy_percentage),"with an accuracy score of", max(accuracy_percentage))
+plot(accuracy_percentage, main = "KNN Accuracy", xlab = "K Nearest Neighbors", ylab = "Accuracy", col = "blue", pch=20, cex = 2, axes = FALSE)
+axis(1, seq(1,20,1), col = NA, col.ticks = 1)
+axis(2, seq(0.80, 0.87, 0.005), col = NA, col.ticks = 1, las=2)
+abline(h=seq(0.80, 0.87, 0.005),lty=2,col="black")
+```
+
+***Conclusion**
+It appears that having a K value of 12 is the best perfroming model, with an accuracy score 85.32%. Granted, this doesn't necessarily mean it is a good classifier, as no precesion or recall statistics have been calculated (confusion matrix) as done with SVM. But it appears to be a good starting point.

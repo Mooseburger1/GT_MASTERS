@@ -1,0 +1,135 @@
+---
+title: "HW8 - KELLY \"SCOTT\" SIMS"
+output: pdf_document
+pdf_document: default
+html_notebook: default
+---
+
+Using the crime data set uscrime.txt from Questions 8.2, 9.1, and 10.1, build a regression model
+using:
+1. Stepwise regression
+2. Lasso
+3. Elastic net
+For Parts 2 and 3, remember to scale the data first – otherwise, the regression coefficients will be on
+different scales and the constraint won’t have the desired effect.
+For Parts 2 and 3, use the glmnet function in R.
+Notes on R:
+• For the elastic net model, what we called lambda in the videos, glmnet calls “alpha”; you can get a
+range of results by varying alpha from 1 (lasso) to 0 (ridge regression) [and, of course, other
+values of alpha in between].
+• In a function call like glmnet(x,y,family=”mgaussian”,alpha=1) the predictors x
+need to be in R’s matrix format, rather than data frame format. You can convert a data frame
+to a matrix using as.matrix – for example, x <- as.matrix(data[,1:n-1])
+• Rather than specifying a value of T, glmnet returns models for a variety of values of T. 
+```{r}
+library(olsrr)
+```
+
+```{r}
+data <- read.table('uscrime.txt', header = TRUE, stringsAsFactors = FALSE)
+head(data)
+```
+
+#STEPWISE REGRESSION
+
+For stepweise regression, thankfully R already has a module that will handle the very iterative process of adding and subtracting features while training the model and analyzing it. Let's put that funciton to use and build regression models using **Stepwise Regression**. The *ols_step_both_p* function selects features based on p-value. Because of this, we can set the upper and lower bounds of the p-value for the function to take into consideration when it is selecting its features. We will set the "pent" equal to 0.1, meaning variables with p value less than 0.1 will enter into the model. Will will set "prem" equal to 0.3 meaning variables with p value more than 0.3 will not enter into the model
+
+
+```{r}
+stepwise.model <- lm(Crime ~., data = data)
+step <- ols_step_both_p(stepwise.model, pent = 0.1, prem = 0.3, details = TRUE)
+step
+```
+***Analysis**
+We can see above that each step is a concatenation of the previous model, starting at *Po1*, and the next feature. We can see at the bottom of the iterations, we ended up with a model that had 15 candidates for features but now is constructed by only 6 of them. The stepwise selection summary shows that with each feature addition, RMSE, AIC, and C(p) were dropping, while R-squared and Adjusted R-squared are increasing. This is the effect we like to see. We can plot the model to illustrate how much these metrics changed with each addition of a new feature.
+```{r}
+plot(step)
+```
+```{r}
+#Unseen data given a previous HW assignment
+new.data <- data.frame("M"= 14,
+"So" = 0,
+"Ed" = 10,
+"Po1" = 12,
+"Po2" = 15.5,
+"LF" = .640,
+"M.F" = 94,
+"Pop" = 150,
+"NW" = 1.1,
+"U1" = .120,
+"U2" = 3.6,
+"Wealth" = 3200,
+"Ineq" = 20.1,
+"Prob" = .04,
+"Time" = 39)
+```
+
+Let's use the best model from Stepwise Regression to predict on the unseen data that was presented in Week 5 for the Crime data. Predictions on previous models were in the range of 1100 to 1350. So we should expect to see a prediction from this model within that range.
+```{r}
+best_step.model <- step$model
+unseen_step <- new.data[,c('Po1', 'Ineq', 'Ed','M','Prob','U2')]
+predict(best_step.model, unseen_step)
+```
+The prediction is well within the expected range of Crime predictions.
+
+
+#LASSO REGRESSION
+
+Next, we will implement LASSO Regression, which can consequently drive feature coeffecicents to zero with a high enough hyperparameter of alpha (lambda). Let's see what features LASSO selects vs Stepwise
+```{r}
+require(glmnet)
+require(caret)
+```
+
+```{r}
+set.seed(42)
+
+#Scale the train data
+x <- as.data.frame(data[,1:15])
+pp = preProcess(x)
+scaled_x <- as.matrix(predict(pp, x))
+#Scale the test data
+scaled_test <- as.matrix(predict(pp, new.data))
+#target variable
+y <- data[,16]
+
+lasso <- cv.glmnet(scaled_x,y, family = 'gaussian', alpha = 1, parallel = TRUE)
+plot(lasso)
+plot(lasso$glmnet.fit, xvar='lambda', label = TRUE)
+rsq = 1 - lasso$cvm/var(y)
+plot(lasso$lambda,rsq)
+coeffecients <- coef(lasso, s=lasso$lambda.min)
+coeffecients
+paste('Minimum MSE: ',min(lasso$cvm))
+paste('Maximum R^2: ', max(rsq))
+```
+Above in the first graph, we are basically witnessing the relationship between the regularization tuning parameter lambda, and Mean Squared Error. The two dotted lines is lambda min and lambda 1se (standard error) which is the best lamda that minimizes mean squared error and the lambda that is 1 standard error from lambda min. At the very top of the graph, the numbers represent how many non zero coeffecients there are. Therefore, the cross validated model apepars to have selected 11 non zero features and a lambda min of approx. 2.1(log) . The second graph shows how the coeffecients for all 15 features are adjusted as lambda is adjusted. We can see that as lambda increases, more and more features trend towards zero. Also, we can see that the most optimal model selected 11 of the initial 15 features where Po2, LF, Pop and Time are all zero. The minimum cross validated MSE (minimum square error) was 73725 for this model selection in comparison to stepwise's 40,276. Stepwise's R^2 was also better at 0.766, and the lasso model is a mere 0.51. Next Let's next predict Crime using this model and the new data. Again we are looking for values between 1000 and 1350
+
+```{r}
+coeffecients[1] + coeffecients[2]*scaled_test[1] + coeffecients[3]*scaled_test[2] + coeffecients[4]*scaled_test[3] + coeffecients[5]*scaled_test[4] + coeffecients[6]*scaled_test[5] + coeffecients[7]*scaled_test[6] + coeffecients[8]*scaled_test[7] + coeffecients[9]*scaled_test[8] + coeffecients[10]*scaled_test[9] + coeffecients[11]*scaled_test[10] + coeffecients[12]*scaled_test[11] + coeffecients[13]* scaled_test[12] + coeffecients[14]*scaled_test[13] + coeffecients[15]*scaled_test[14] + coeffecients[16]*scaled_test[15]
+```
+This model predict 1097, in comparison to the 1304 the Stepwise Model predicted. Next we will use an elastic net model which uses a combination of LASSO and RIDGE regression
+
+
+
+#Elastic Net
+```{r}
+set.seed(24)
+elastic <- cv.glmnet(x = scaled_x, y = y, family = 'gaussian')
+plot(elastic)
+plot(elastic$glmnet.fit, xvar='lambda', label = TRUE)
+coeffecients <- coef(elastic, s = 'lambda.min')
+rsq = 1 - elastic$cvm/var(y)
+plot(elastic$lambda,rsq)
+coeffecients
+paste('Minimum MSE: ',min(elastic$cvm))
+paste('Maximum R^2: ', max(rsq))
+```
+
+The elatic net model improved upon the LASSO model slightly with a MSE score of 62,201 and R^2 score of 0.58. This however is still not as good as the stepwise method. This can mean one of two things, either stepwise was a better method of model selection or it is overfitting the data. Finally, let's predict on the unseen data with the coeffecietns from elastic net
+
+
+```{r}
+coeffecients[1] + coeffecients[2]*scaled_test[1] + coeffecients[3]*scaled_test[2] + coeffecients[4]*scaled_test[3] + coeffecients[5]*scaled_test[4] + coeffecients[6]*scaled_test[5] + coeffecients[7]*scaled_test[6] + coeffecients[8]*scaled_test[7] + coeffecients[9]*scaled_test[8] + coeffecients[10]*scaled_test[9] + coeffecients[11]*scaled_test[10] + coeffecients[12]*scaled_test[11] + coeffecients[13]* scaled_test[12] + coeffecients[14]*scaled_test[13] + coeffecients[15]*scaled_test[14] + coeffecients[16]*scaled_test[15]
+```
+

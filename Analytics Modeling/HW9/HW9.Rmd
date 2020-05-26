@@ -1,0 +1,67 @@
+---
+title: "HW9 - KELLY \"SCOTT\" SIMS"
+output: pdf_document
+pdf_document: default
+html_notebook: default
+---
+
+Question 12.1
+Describe a situation or problem from your job, everyday life, current events, etc., for which a design of
+experiments approach would be appropriate.
+
+>A design of experiments might be appropriate in determining what personnel a general contractor might hire to be on his team for buidling houses. The factors would be all the potential candidates. By tring different iterations of the factors (candidates) he can determine the best team by evaluating the quality of house built (structurally sound, timeline, and budget) by each combination of candidates
+
+
+
+Question 12.2
+To determine the value of 10 different yes/no features to the market value of a house (large yard, solar
+roof, etc.), a real estate agent plans to survey 50 potential buyers, showing a fictitious house with
+different combinations of features. To reduce the survey size, the agent wants to show just 16 fictitious
+houses. Use R’s FrF2 function (in the FrF2 package) to find a fractional factorial design for this
+experiment: what set of features should each of the 16 fictitious houses have? Note: the output of
+FrF2 is “1” (include) or “-1” (don’t include) for each feature.
+
+Using FrF2, we can set our 16 fictitious houses using nruns and the 10 features using nfactors
+
+```{r}
+require(FrF2)
+
+pseudo.design <- FrF2(nruns = 16, nfactors = 10)
+pseudo.design
+```
+
+In order to disambiguate the features, let's randomly select 10 standard home features to replace the alphabetical representation
+
+```{r}
+pseudo.design <- FrF2(nruns = 16, nfactors = 10, factor.names = c('swimming pool', 'hot tub', 'yard','community features' ,'central air', 'natural gas', 'sprinkler system', 'google fiber', 'basement', 'office'))
+
+pseudo.design
+```
+
+
+Question 13.1
+For each of the following distributions, give an example of data that you would expect to follow this
+distribution (besides the examples already discussed in class).
+
+a. Binomial
+
+b. Geometric
+
+c. Poisson
+
+d. Exponential
+
+e. Weibul
+
+
+
+>a.) The gender of people who buy sports cars (man or woman)
+
+>b.) How many men purchase a sports car until you get a woman purchaser
+
+>c.) Number of car accidents invovlving sports cars
+
+>d.) The amount of time an earthquake occurs
+
+>e.) The amount of miles a sports car can be driven until it breaks down
+

@@ -1,0 +1,145 @@
+---
+title: "HW 6 - Kelly \"Scott\" Sims"
+output: pdf_document
+pdf_document: default
+html_notebook: default
+---
+
+Using the same crime data set uscrime.txt as in Question 8.2, apply Principal Component Analysis
+and then create a regression model using the first few principal components. Specify your new model in
+terms of the original variables (not the principal components), and compare its quality to that of your
+solution to Question 8.2. You can use the R function prcomp for PCA. (Note that to first scale the data,
+you can include scale. = TRUE to scale as part of the PCA function. Don’t forget that, to make a
+prediction for the new city, you’ll need to unscale the coefficients (i.e., do the scaling calculation in
+reverse)!)
+
+Let's first take a look at our data again
+```{r}
+library(ggplot2)
+library(ggfortify)
+data <- read.table('uscrime.txt', header = TRUE, stringsAsFactors = FALSE)
+head(data)
+```
+
+We can see that there are 15 different features in this dataset (not including the target variable, crime), each which attribute to their own dimension in vector space. (15-dimensional graph if you will). Their dimensions between each other vary greatly. Prob is as low as 0.02 where as Wealth is in the thousands. Scaling the data will be necessary. Next, we will investigate the priciple components of this data and see which dimensions explain the most variance
+
+# Perform PCA Analysis
+```{r}
+data.pca <- prcomp(data[-16], center = TRUE, scale. = TRUE)
+summary(data.pca)
+autoplot(data.pca)
+plot(data.pca, type = 'line', main = 'Variance Explained by Component')
+```
+
+> We scaled and center the data while performing PCA, and we can see that we have 15 principle components. Each component explains a certain amount of variance within the data. For instance PC1 and PC2 explains 40% and 19% of the variance respectively. That means from just these two components, nearly 50% of the information in the dataset, of 15 variables, can be explained. The scree plot (variance explained by component) shows all the components (x-axis) and the Eigenvalues (y-axis) which basically stand for the amount of variance each component represent. By using only the first 9 Principle components, we can effectively reduce our model from one that is of 15 features down to 9 while maintaining ~96% of the variance in the data. Next, we will investigate further into the first 2 principle components with a loading plot.
+
+```{r}
+ggbiplot::ggbiplot(data.pca, circle = TRUE)
+```
+
+> The plot above shows how strongly each feature influences each principle component. We can see that Wealth greatly influences PC1 in the positive direction while Ineq greatly influences PC1 in the negative direction. Since these two features are almost 180 degrees out from each other, they're negatively correlated. Conversely, features PO1 and PO2 are almost on top of each other, meaning they're very positively correlated. Judging from the loading chart, we can see PC1 is in fact mostly a measure of Wealth, ED, PO1 (and PO2) and Ineq, where PC2 is mostly a measure of Pop and M.F. 
+
+>If we had specific instances of a categorical class we were trying predict, we could use PCA to see how these observations all group together categorically. For instance, if we were trying to determine how crime looked in southern states versus northern states, we could color the data via this binary category and highlight the groupings (NOTE: Since 'So' is a feature being fed into PCA, this is known as data leakage, and in practice should be avoided always. The following graph is merely for illustrative purposes)
+
+```{r}
+library(ggbiplot)
+ggbiplot::ggbiplot(data.pca, labels = data$Crime, groups=data$So, ellipse = TRUE, circle = TRUE)
+```
+
+>From the graph above, we can see that Southern states, noted by the light blue color are grouped with each other on the negative side of PC1 while northern states, noted in black, are grouped more so on the positive side. Again this is to be expected since So negatively affects PC1, so being a southern state would group you on the left side of PC1. Hence, data leakage. The red circle in the middle represents the overall magnitude of each feature. Each feature is clearly visible within the circle because we scaled the data. Had we not scaled it, the larger features would greatly dominate the component and it would consume the majority of the variance. Let's visualize this real quick.
+
+```{r}
+unscaled <- prcomp(data[-1])
+ggbiplot::ggbiplot(unscaled, circle = TRUE)
+```
+
+>As you can see, the numerical ranges of Wealth overshadow all other features so much that it dominates the component space. This is why we scale data!! Now that we have fully investigated our principle components, let's build a regression model using the first 5 components. I'm selecting the first 5 even though I previously mentioned the first 9 early, because selecting 9 PCAs could possibly still lead to overfitting. Also, with only 5 PCAs, we are still accounting for ~87% of the variance.
+
+```{r}
+#Create a dataframe using the PC values and create a crime column to bring in the target variable
+train.data <- data.frame(Crime = data$Crime, data.pca$x)
+
+#We are interested in the first 5 PCAs
+train.data <- train.data[,1:6]
+head(train.data)
+```
+
+#Create The Model
+
+```{r}
+pca.model <- lm(Crime~., data = train.data)
+summary(pca.model)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(pca.model)
+```
+
+***Analysis**
+There's a lot going on the in the summary statistics. The main thing to note is the R-squared and the F-statistc. The R-squared is a measure of how much variablitly our model can explain. As seen above, our model can explain ~65% of the variability in the data. This is pretty good. The F-stastic compares our model to an "intercept only model". An intercept only model is one without any additional features. Basically you interpret the F-statistic with a null and alternative hypothesis
+
+>*H0*: The fit of intercept only model and the current model is the same. i.e. Additional variables do not provide value taken together
+
+>*H1*: The fit of intercept only model is significantly less compared to our current model. i.e. Additional variables do make the model significantly beter.
+
+In our F-statistic above, we see we have a value of 14.91 with a p-value of 2.446e-08. This p-value is far less than 0.05 (The usual critical value for significance). Therefore, we can conclude that having our 5 PCAs in the model is significant enough that they should be there.
+
+Next, let's predict on unseen data
+
+#Unseen data
+```{r}
+new.data <- data.frame("M"= 14,
+"So" = 0,
+"Ed" = 10,
+"Po1" = 12,
+"Po2" = 15.5,
+"LF" = .640,
+"M.F" = 94,
+"Pop" = 150,
+"NW" = 1.1,
+"U1" = .120,
+"U2" = 3.6,
+"Wealth" = 3200,
+"Ineq" = 20.1,
+"Prob" = .04,
+"Time" = 39)
+
+#Transform the new data into PCA using the same scaling as the training data
+new.datapca <- as.data.frame(predict(data.pca, newdata = new.data))
+new.datapca
+```
+
+> Next we will select the first 5 PCAs of this new data and predict upon it with our regression model
+
+```{r}
+new.datapca <- new.datapca[1,1:5]
+#This automatically scales the new data with respect to the previously scaled data during the PCA part
+predict(pca.model, newdata = new.datapca)
+```
+
+This predicted value seems reasonable since the range for crime is 500-2000. Next, we will see what our 5 PCAs are mostly comprised of. I will run last weeks regression model very quickly for comparison purposes without any deep explanation. Once we have the results of the two, we can compare and contrast.
+
+```{r}
+sig.model <- lm(Crime ~ Ed + Ineq + M + Prob + U2 + Po1, data = data)
+summary(sig.model)
+
+```
+```{r}
+predict.lm(sig.model, new.data)
+```
+
+>So when we ran our original regression model last week, we did this really long analysis that ultimately landed us to these 6 main features of Ed, Ineq, M, Prob, U2, and Po1. The R squared value of 0.7659 is really good, but also hints a little towards overfitting. However, the value of 1304.245 seems a reasonable number. With PCA, we didn't have to do a super long analysis to remove highly correlated data and manually select significant features. We were able to reduce our vector space from 15 to 5 while maintaining information and randomness from all of the features. The predicted value from PCA was still in the near realm of the original regression model. We can see what the significant features were for the regression model from last week. We also know that PC1 was characterized mostly by Wealth, ED, PO1 (and PO2) and Ineq, where PC2 is mostly a measure of Pop and M.F. Let's now see what the other 3 PCAs used in the analysis are characterized by.
+
+
+```{r}
+ggbiplot::ggbiplot(data.pca, circle = TRUE, choices = c(3,4))
+```
+
+> We can see that PC3 is comprised of mostly U1 and U2. Both of these variables are pretty close in proximity and magnitude to each other which hints at a strong colinear relationship. PC4  Is mostly explained by Prob, and Time. Again, these two features are almost 180 degrees out, so they are negatively correlated with respect to PC4
+
+```{r}
+ggbiplot::ggbiplot(data.pca, circle = TRUE, choice = c(5,6))
+```
+
+>Finally PCA5 is mostly characterized by M.F. Almost all of the main characterizing features in PCA were also deemed significant, and included in last weeks regression model. This is a great example of how PCA can be used to subdue overfitting while maintaining information from all features. It is also a way of measuring feature importance by their over all magnitude in characterizing each PCA

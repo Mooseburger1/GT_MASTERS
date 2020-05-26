@@ -1,0 +1,155 @@
+---
+title: 'HW #2 - KELLY "SCOTT" SIMS'
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+
+**Question 3.1**
+---------------------
+Using the same data set (credit_card_data.txt or credit_card_data-headers.txt) as
+in Question 2.2, use the ksvm or kknn function to find a good classifier:
+(a) using cross-validation (do this for the k-nearest-neighbors model; SVM is optional)
+```{r}
+#read in the data
+data <- read.csv('credit_card_data-headers.csv', header = TRUE)
+library(caret)
+library(e1071)
+#set the seed for reproducibility
+set.seed(42)
+
+#split the data into independent and dependent variables
+X <- as.matrix(data[1:10])
+y <- as.matrix(data[11])
+
+#setup the model training parameters for crossvalidation
+train_control <- trainControl(method = 'repeatedcv', number = 10, repeats =3)
+#train the model using crossvalidation, scale the data first and report on the accuracy of each metric k
+model <- train(X,as.factor(y),method='knn', trControl = train_control, metric = 'Accuracy', tuneGrid = expand.grid(k = 1:100), preProcess = c("center","scale"), tuneLength = 10)
+
+model
+```
+
+***Analysis**
+Using cross validation and with 10 folds, a knn model was trained, investigating k-nearest neighbor values from 1 neighbor to 100 neighbors. Ultimately during CV, 5 nearest neighbors resulted in the model with the best accuracy on the data
+
+
+
+### (b) splitting the data into training, validation, and test data sets (pick either KNN or SVM;
+```{r}
+library(caret)
+data <- read.csv('credit_card_data-headers.csv', header = TRUE)
+data[['R1']] = factor(data[["R1"]])
+
+set.seed(49)
+#Create a partion for 70% Training Data
+intrain <- createDataPartition(y=data$R1, p = 0.7, list=FALSE)
+train_set <- data[intrain,]
+not_train_set <- data[-intrain,]
+
+#For the remaining 30% of data,split it 50/50 between a train and validation set
+invalidate <- createDataPartition(y=not_train_set$R1, p=0.5, list=FALSE)
+test_set <- not_train_set[invalidate,]
+valid_set <- not_train_set[-invalidate,]
+
+#train model and predict
+model <- train(R1~., data=train_set, method ='knn', preProcess = c('center','scale'), tuneGrid = expand.grid(k = 1:100))
+val_pred <- predict(model, valid_set)
+test_pred <- predict(model, test_set)
+
+print(model)
+
+cat('\n\n','***** VALIDATION DATA METRICS *******','\n')
+confusionMatrix(table(val_pred, as.matrix(valid_set['R1'])), positive='1')
+cat('\n\n','***** TEST DATA METRICS *****','\n')
+confusionMatrix(table(test_pred, as.matrix(test_set['R1'])), positive='1')
+```
+
+***Analysis**
+Interestingly enough, when performing a Train/Validation/Test split, the accuracy is comparable with cross validation. However the optimal k nearest neighbor has changed greatly from 5 to 20. The model is pretty good at picking the negative class ("0"), but is not as optimal with the positive class ("1") when analyzing the test set metrics. it picked 37 / 48 positive classes for a positive prediciton value of 77%. Conversely we can see the negative prediciton accuarcy is 86%.
+
+
+**Question 4.1**
+---------------
+Describe a situation or problem from your job, everyday life, current events, etc., for which a clustering
+model would be appropriate. List some (up to 5) predictors that you might use.
+
+
+*In business analytics, there are cumbersome amounts of data, both structured and unstructured. Because of this, some online retailers will utilize clustering techniques to refine what specific merchandise they show you as suggestions on their websites. For example they'll keep track of what your past purchases were, what you currently have in your cart, your clickstream through their sites looking for specific brand patterns, how long you stay on an item's page before either adding it to the cart or moving on to another item, as well as how long you hover over a specific item before clicking the link (or not clicking the link). From this, they can group you into a cluster of other clients and compare you to what those other clients have purchased in the past. If you haven't also already purchased those items, they will suggest those items to you since you seem to fit the cluster of customers who typically buy those items.*
+
+**Question 4.2**
+------------------------
+The iris data set iris.txt contains 150 data points, each with four predictor variables and one
+categorical response. The predictors are the width and length of the sepal and petal of flowers and the
+response is the type of flower. The data is available from the R library datasets and can be accessed with
+iris once the library is loaded. It is also available at the UCI Machine Learning Repository
+(https://archive.ics.uci.edu/ml/datasets/Iris ). The response values are only given to see how well a
+specific method performed and should not be used to build the model.
+Use the R function kmeans to cluster the points as well as possible. Report the best combination of
+predictors, your suggested value of k, and how well your best clustering predicts flower type.
+
+
+# Explore the Data Visually
+```{r}
+data(iris)
+head(iris)
+#ggplot the data
+plot <- ggplot(iris, aes(x=Petal.Length, y=Sepal.Length, colour = Species)) + geom_point() + ggtitle('Iris Data')
+plot + labs(x = "Petal Length", y = "Sepal Length")
+```
+
+***Analysis**
+Investigating the data visually, we can see a clear distinction amongst the 3 different iris types. The Versicolor and Virginica however appear to have an overlapping zone which may cause somewhat of a hit in model accuracy once it is trained. Before we train our model, let's see how many clusters is optimal. We won't scale our data since it is all within the same relative range as far as scale is concerned for each feature.
+
+```{r}
+data(iris)
+
+#extract the independent variables
+X <- iris[,1:4]
+
+#intialize and empty vector to store all the calculated wss values
+wss <- rep(0,10)
+#try kmeans models using 1 to 10 clusters
+for(i in 1:10){
+  
+model <- kmeans(X, i, nstart = 50)
+wss[i] <- model$tot.withinss
+  
+}
+#create elbow chart
+plot(1:10, wss, main='ELBOW CHART', xlab = 'Number of Clusters', ylab = 'Within Sum of Squares (SS)')
+```
+
+
+***Analysis**
+From the elbow chart above it appears that either 3 or 4 clusters is optmial since they form the "elbow" of the graph. We are going to cheat and train the model using only 3 clusters since we know there are only 3 iris types.
+
+```{r}
+data(iris)
+
+#separate the independent variables
+X <- iris[,1:4]
+
+#train the model
+model <- kmeans(X, 3, nstart = 50)
+
+#plot the data with the corresponding cluster centroids from the trained model
+plot(X[c("Sepal.Length", "Petal.Width")], col=model$cluster, main="Sepal Length vs. Petal Width", xlab = "Sepal Length", ylab = "Petal Width")
+points(model$centers[,c("Sepal.Length", "Petal.Width")], col=1:3, pch=23, cex=3)
+
+plot(X[c("Petal.Length", "Sepal.Width")], col=model$cluster, main="Petal Length vs Sepal Width", xlab = "Petal Length", ylab = "Sepal Width")
+points(model$centers[,c("Petal.Length", "Sepal.Width")], col=1:3, pch=23, cex=3)
+
+plot(X[c("Sepal.Length", "Sepal.Width")], col=model$cluster, main="Sepal Length vs Sepal Width", xlab = "Sepal Length", ylab = "Sepal Width")
+points(model$centers[,c("Sepal.Length", "Sepal.Width")], col=1:3, pch=23, cex=3)
+
+plot(X[c("Petal.Length", "Petal.Width")], main = "Petal Length vs Petal Width", col=model$cluster, xlab = "Petal Length", ylab = "Petal Width")
+points(model$centers[,c("Petal.Length", "Petal.Width")], col=1:3, pch=23, cex=3)
+
+```
+
+***Analysis**
+We can see from all the charts above the the cluster centroids do coincide with their proper classification. This reaffirms our analysis from the elbow chart that 3 clusters was indeed the optimium model. From this we can conclude that the model will predict corresponding flowers accurately, as the centroids are well embedded in the middle of the correct classifications

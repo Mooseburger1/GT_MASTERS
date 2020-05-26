@@ -1,0 +1,470 @@
+---
+title: "HW 7 - KELLY \"SCOTT\" SIMS"
+output: pdf_document
+pdf_document: default
+---
+
+Using the same crime data set uscrime.txt as in Questions 8.2 and 9.1, find the best model you can
+using
+(a) a regression tree model, and
+(b) a random forest model.
+In R, you can use the tree package or the rpart package, and the randomForest package. For
+each model, describe one or two qualitative takeaways you get from analyzing the results (i.e., don’t just
+stop when you have a good model, but interpret it too).
+
+### Load Libraries
+```{r}
+library(rsample)     # data splitting 
+library(dplyr)       # data wrangling
+library(rpart)       # performing regression trees
+library(rpart.plot)  # plotting regression trees
+library(randomForest)
+library(h2o)
+library(ggplot2)
+library(caTools)
+library(caret)
+library(pROC)
+```
+
+### Load the data and inspect
+```{r}
+data <- read.table('uscrime.txt', header = TRUE, stringsAsFactors = FALSE)
+#Separate independent and dependent variables just in case
+Y = as.data.frame((data[,16]))
+X = as.data.frame(data[,1:15])
+head(data)
+```
+
+# CART
+-------------------
+
+With regressions trees, there's no need to scale the data before constructing a model. See quote below as noted from stats.stackexchange.com
+
+>"Standardization does not add or subtract information contained in a given variable and does not distort its relationship to a target variable. For example, if you had a variable "age" which was a predictor for "purchase car". By changing age to (age - mean / sd ) is not going to change its relationship to purchase car, it merely maps it to a new space.
+When CART looks for the best splits, it going to use entropy or gini to calculate information gain, this is not dependent on the scale of your predictor variable, rather on the resultant purity of the variable "purchase car"."
+
+### Build the CART model
+```{r}
+cart_model <- rpart(
+  formula = Crime ~ .,
+  data    = data,
+  method  = "anova"
+  )
+
+summary(cart_model)
+```
+The summary statistic above explains steps of the splits. For example, we start with n = 47 observations at the root node (very beginning) and the first variable we split on (the first variable that optimizes a reduction in SSE) is Po1. Node #2 has 23 observations and is split on Pop. Opposite of that node is Node #3 being split on NW. We could continue to analyze these superfluous statistics, but it is much easier to just visualize the tree itself.
+
+#Note:
+-------
+At the very top of the summary statistics above, there is a cp table which lists the 4 nodes after 3 splits. For the 3rd split, we see the xerror term is *1.005*. This is what we will be trying to imporve upon
+
+### Plot the Regression Tree
+```{r}
+rpart.plot(cart_model)
+```
+This visualization makes it easier to see that in the initial model, there were only three splits performed. These splits coincide with what was stated above, Po1 being the most important factor followed by Pop and NW respectively. But if three features are being split upon, what about the other 12 features in the model? According to the post below, rpart is doing the following behind the scenes
+
+>Behind the scenes rpart is automatically applying a range of cost complexity (αlpha) values to prune the tree. To compare the error for each αlpha value, rpart performs a 10-fold cross validation so that the error associated with a given αlpha value is computed on the hold-out validation data.
+
+In this example, we find diminishing returns for the 4 terminal nodes as seen blelow. The y-axis is the cross validation error. The lower x-axis is cost complexity parameter (alpha), and the upper x-axis is the number of terminal nodes. The complexity parameter (cp) is used to control the size of the decision tree and to select the optimal tree size. If the cost of adding another variable to the decision tree from the current node is above the value of cp, then tree building does not continue. We could also say that tree construction does not continue unless it would decrease the overall lack of fit by a factor of cp.
+
+```{r}
+plotcp(cart_model)
+
+```
+
+### Tuning the model with Gridsearch
+
+In addition to the cost complexity parameter, it is also common to tune:
+
+1. minsplit: the minimum number of data points required to attempt a split before it is forced to create a terminal node. The default is 20. Making this smaller allows for terminal nodes that may contain only a handful of observations to create the predicted value.
+2. maxdepth: the maximum number of internal nodes between the root node and the terminal nodes. The default is 30, which is quite liberal and allows for fairly large trees to be built.
+
+To perform a grid search we first create our hyperparameter grid. In this example, I search a range of minsplit from 1-20 and vary maxdepth from 2-15. This gives 280 different hyperparameter combinations to try.
+
+```{r}
+hyper_grid <- expand.grid(
+  minsplit = seq(1, 20, 1),
+  maxdepth = seq(2, 15, 1)
+)
+
+head(hyper_grid)
+length(hyper_grid[,1])
+```
+
+# Iterate through the hypergrid creating a model for each combination
+We will store the resulting model in a list called models. We will use this list of models to extract the best one
+```{r}
+models <- list()
+
+for (i in 1:nrow(hyper_grid)) {
+  
+  # get minsplit, maxdepth values at row i
+  minsplit <- hyper_grid$minsplit[i]
+  maxdepth <- hyper_grid$maxdepth[i]
+
+  # train a model and store in the list
+  models[[i]] <- rpart(
+    formula = Crime ~ .,
+    data    = data,
+    method  = "anova",
+    control = list(minsplit = minsplit, maxdepth = maxdepth)
+    )
+}
+
+```
+
+#Extract the best performing models, and their subsequent hyperparameters
+
+Next, from each model, we will extract the lowest **xerror** and the lowest **cp** value for each model, and append those values to the hypergrid next to their subseqent hyperparameters. We will then sort the hypergrid by lowest error and pick the best performing model.
+
+```{r}
+# function to get optimal cp
+get_cp <- function(x) {
+  min    <- which.min(x$cptable[, "xerror"])
+  cp <- x$cptable[min, "CP"] 
+}
+
+# function to get minimum error
+get_min_error <- function(x) {
+  min    <- which.min(x$cptable[, "xerror"])
+  xerror <- x$cptable[min, "xerror"] 
+}
+
+hyper_grid %>%
+  mutate(
+    cp    = purrr::map_dbl(models, get_cp),
+    error = purrr::map_dbl(models, get_min_error)
+    ) %>%
+  arrange(error) %>%
+  top_n(-5, wt = error)
+```
+ 
+We Can see above that the best performing model was one that has a minsplit of 8, maxdepth of 9 and a cp of 0.01. Let's build this model and visualize the resulting tree
+
+#Best Model
+```{r}
+optimal_tree <- rpart(
+    formula = Crime ~ .,
+    data    = data,
+    method  = "anova",
+    control = list(minsplit = 8, maxdepth = 9, cp = 0.01)
+    )
+
+rpart.plot(optimal_tree)
+```
+ 
+So here we have the best tuned model. We can see that it just added one more split from the original model. At the leafs, we can see that there is 26% of the data at a Crime rate average of 550, 23% at a crime rate average of 800, etc etc. Let's use last weaks "new unseen data" and make a prediction with this model
+
+###Prediction
+
+```{r}
+new.data <- data.frame("M"= 14,
+"So" = 0,
+"Ed" = 10,
+"Po1" = 12,
+"Po2" = 15.5,
+"LF" = .640,
+"M.F" = 94,
+"Pop" = 150,
+"NW" = 1.1,
+"U1" = .120,
+"U2" = 3.6,
+"Wealth" = 3200,
+"Ineq" = 20.1,
+"Prob" = .04,
+"Time" = 39)
+
+predict(optimal_tree, newdata = new.data)
+
+```
+
+***Analysis**
+We can see that the predicted crime average is 887. This seems lower than what other models had been predicting in weeks past. If you trace the regression tree, we can see exactly where the model divered from expectations. Po1 for the new data is greater than 7.7, so we go to the right side of the tree. Next, we can see that NW is less than the constraint 7.7, so this moves of to the left of that node, bringing us to 887. Had it not been for that one lower value, we can see on the right side of that split, our data is larger than 0.57 for LF, and that would have brought us around the crime average we have been seeing, 1495.
+
+
+# RANDOM FOREST
+-----------------
+```{r}
+set.seed(42)
+
+RF_model <- randomForest(
+  formula = Crime ~ .,
+  data    = data
+)
+
+plot(RF_model, main = 'Random Forest Model')
+
+# number of trees with lowest MSE
+which.min(RF_model$mse)
+
+# RMSE of this optimal random forest
+sqrt(RF_model$mse[which.min(RF_model$mse)])
+```
+
+In the plot above we can see the model that produces the lowest (best) error has about 225 Trees. It's RMSE is 290. After that, the graph flattens out without much of any improvement. randomForest allows the use of crossvalidation in order to train a model as well
+
+### Cross Validation
+
+### Note - the following example is one adapted from an online source. It is not my original code
+```{r}
+set.seed(24)
+valid_split <- initial_split(data, .8)
+
+# training data
+train <- analysis(valid_split)
+
+# validation data
+valid <- assessment(valid_split)
+x_test <- valid[setdiff(names(valid), "Crime")]
+y_test <- valid$Crime
+
+rf_oob_comp <- randomForest(
+  formula = Crime ~ .,
+  data    = train,
+  xtest   = x_test,
+  ytest   = y_test
+)
+
+# extract OOB & validation errors
+oob <- sqrt(rf_oob_comp$mse)
+validation <- sqrt(rf_oob_comp$test$mse)
+
+# compare error rates
+tibble::tibble(
+  `Out of Bag Error` = oob,
+  `Test error` = validation,
+  ntrees = 1:rf_oob_comp$ntree
+) %>%
+  gather(Metric, RMSE, -ntrees) %>%
+  ggplot(aes(ntrees, RMSE, color = Metric)) +
+  geom_line() +
+  scale_y_continuous() +
+  xlab("Number of trees")
+```
+
+### Tuning
+
+The following is quote from source - https://uc-r.github.io/random_forests
+
+>Random forests are fairly easy to tune since there are only a handful of tuning parameters. Typically, the primary concern when starting out is tuning the number of candidate variables to select from at each split. However, there are a few additional hyperparameters that we should be aware of. Although the argument names may differ across packages, these hyperparameters should be present:
+* ntree: number of trees. We want enough trees to stabalize the error but using too many trees is unncessarily inefficient, especially when using large data sets.
+* mtry: the number of variables to randomly sample as candidates at each split. When mtry =p the model equates to bagging. When mtry = 1 the split variable is completely random, so all variables get a chance but can lead to overly biased results. A common suggestion is to start with 5 values evenly spaced across the range from 2 to p.
+* sampsize: the number of samples to train on. The default value is 63.25% of the training set since this is the expected value of unique observations in the bootstrap sample. Lower sample sizes can reduce the training time but may introduce more bias than necessary. Increasing the sample size can increase performance but at the risk of overfitting because it introduces more variance. Typically, when tuning this parameter we stay near the 60-80% range.
+* nodesize: minimum number of samples within the terminal nodes. Controls the complexity of the trees. Smaller node size allows for deeper, more complex trees and smaller node results in shallower trees. This is another bias-variance tradeoff where deeper trees introduce more variance (risk of overfitting) and shallower trees introduce more bias (risk of not fully capturing unique patters and relatonships in the data).
+* maxnodes: maximum number of terminal nodes. Another way to control the complexity of the trees. More nodes equates to deeper, more complex trees and less nodes result in shallower trees.
+
+# Tuning with H20 
+The following code is adapted from the same online source as above. It will be used to note the most optimal way (effeciency) to tune a random forest model. I'm using the code as provided by the source because i've never used the H2o library before and I am very unfamiliary with it's syntax and operations. It will be used as is in order to come back to as reference material in the future.
+
+
+### Start an h2o instance
+```{r}
+h2o.no_progress()
+h2o.init(max_mem_size = "5g")
+```
+
+
+```{r}
+# create feature names
+y <- "Crime"
+x <- setdiff(names(data), y)
+
+# turn training set into h2o object
+train.h2o <- as.h2o(data)
+
+# hyperparameter grid
+hyper_grid.h2o <- list(
+  ntrees      = seq(100, 400, by = 100),
+  mtries      = seq(2, 10, by = 2),
+  max_depth   = seq(5, 10, by = 5),
+  min_rows    = seq(1, 5, by = 1),
+  nbins       = seq(2, 10, by = 2),
+  sample_rate = c(.55, .632, .75)
+)
+
+# random grid search criteria
+search_criteria <- list(
+  strategy = "RandomDiscrete",
+  stopping_metric = "mse",
+  stopping_tolerance = 0.005,
+  stopping_rounds = 10,
+  max_runtime_secs = 15*60
+  )
+
+# build grid search 
+random_grid <- h2o.grid(
+  algorithm = "randomForest",
+  grid_id = "rf_grid2",
+  x = x, 
+  y = y, 
+  training_frame = train.h2o,
+  hyper_params = hyper_grid.h2o,
+  search_criteria = search_criteria
+  )
+
+# collect the results and sort by our model performance metric of choice
+grid_perf2 <- h2o.getGrid(
+  grid_id = "rf_grid2", 
+  sort_by = "mse", 
+  decreasing = FALSE
+  )
+print(grid_perf2)
+```
+
+As we can see above, we ran through 1615 different models to arrive at the best one. Let's extract the best model using h2o's API, and compare its RMSE to the original models RMSE of 290.168, at the top of this section
+
+```{r}
+# Grab the model_id for the top model, chosen by validation error
+best_model_id <- grid_perf2@model_ids[[1]]
+best_model <- h2o.getModel(best_model_id)
+
+# RMSE of best model
+h2o.mse(best_model) %>% sqrt()
+## [1] 23104.67
+
+```
+
+With an RMSE of 242.90, this model is performing better than the non tuned model. Let's use this model to predict on the new unseen data. We will compare its results to those of the CART model in the first section.
+
+```{r}
+pred_h2o <- predict(best_model, as.h2o(new.data))
+head(pred_h2o)
+```
+
+***Analysis**
+The Random Forest model predcited a value of 1172. This is more along the lines of the values we had been seing in the other models. Remember that the CART model predict 872. There was a gross estimation in contrast to all the other models, leading us to the obvious conlcusion that the Rnadom Forest model is much better than the simpler CART model
+
+### Always shutdown your h2o instances when done
+```{r}
+h2o.shutdown(prompt = FALSE)
+```
+
+
+Question 10.2
+Describe a situation or problem from your job, everyday life, current events, etc., for which a logistic
+regression model would be appropriate. List some (up to 5) predictors that you might use.
+
+> Logistic Regression models are used today in the medical field in order to determine if a patient's tumor is benign or malignant. Various features can be used in the model to predict one of the binary classes. Such as:
+1. Age of patient
+2. Gender
+3. Family history with cancer
+4. Length of tumor
+5. Width of tumor
+6. Any image indicators from CT and/or Sonograph
+
+
+Using the GermanCredit data set germancredit.txt from
+http://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german / (description at
+http://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29 ), use logistic
+regression to find a good predictive model for whether credit applicants are good credit risks or
+not. Show your model (factors used and their coefficients), the software output, and the quality
+of fit. You can use the glm function in R. To get a logistic regression (logit) model on data where 
+the response is either zero or one, use family=binomial(link=”logit”) in your glm
+function call.
+
+### Load the data
+```{r}
+gc_data <- read.table('germancredit.txt', header = FALSE, stringsAsFactors = TRUE)
+gc_data$V21 <- as.factor(gc_data$V21)
+head(gc_data)
+summary(gc_data)
+```
+
+Looking at the summary of the data, we can see that there is a mix between numerical columns and categorical columns. We set the "stringAsFacotrs" as TRUE. This is R's way of converting string columns into categorical variables to be handled in the model. For instances, we can see how R is going to categorize the first column
+
+```{r}
+contrasts(gc_data$V1)
+```
+
+We can see that entries of A11 will  be encoded as (0,0,0), A12 will be encoded as (1,0,0), A13 will be encoded as (0,1,0) etc.
+
+###Train / Test Split of data
+```{r}
+set.seed(42)
+sample = sample.split(gc_data, SplitRatio = .8)
+train = subset(gc_data, sample == TRUE)
+test = subset(gc_data, sample == FALSE)
+```
+
+###Fit the Model
+```{r}
+gc_model <- glm(V21 ~., family = binomial(link='logit'), data = train)
+summary(gc_model)
+```
+
+From the summary above, we can see there are not a lot of features that are statistically significant. You will also notice that in the data, there were only 20 features, but in the summary above, there is way more than 20. This is because the summary function is analyzing every category for each feature. column V1 had 3 specific categories, and they're broken out into V1A12, V1A13, V1A14. Also note that the AIC value is 753.17. Our goal would be to lower this number while improving the model. A lower value means a better fit. One last note before we continue on, notice that a lot of the coeffecients are negative. If we look at a statistically significant value like V1A14 (no checking account), if you didn't have a checking account, this would reduce your creditworthiness risk log odds by 1.58
+
+
+### ANOVA CHI SQUARED TEST
+Next we will compare our model to the "NULL MODEL" (intercept only model). By using a chi squared test, we want to see how the deviance in residuals change as we add each feature one by one. We want to see an increase in difference between our model and the "NULL MODEL"
+
+```{r}
+anova(gc_model, test = "Chisq")
+```
+
+From the Chi Squared Test, we can see that adding the features V1, V2, V3, and V4 significantly reduced the Residual Deviance in comparison to the NULL model, 735 and 926.51 respectively. Adding more features definetly widens the gap between the NULL model and our model, but the gap slows down in velocity around V10.
+
+###Model Accuracy
+```{r}
+test_predict <- predict(gc_model, newdata = test[,1:20], type ='response')
+ROC <- roc(test$V21, test_predict)
+ggroc(ROC) + theme_dark() + ggtitle('ROC')
+print(paste('AUC: ', auc(ROC)))
+
+test_predict <- ifelse(test_predict > 0.20, 2, 1)
+confusionMatrix(as.factor(test_predict), as.factor(test$V21), positive = '2')
+```
+
+From our "all features" model, we can see that we got about 76% Accuracy using a 50% logit prediction model (meaning if a prediction was greater than 0.5, then 2, if it is 0.5 or less, then 1). Let's now try to tune our model and also tune the prediction threshold.
+
+### Tuning
+From our Chi Square test results, let's use the most statitically significant features from that test. 
+
+1. V1 - Status of existing checking
+2. V2 - Duration in month
+3. V3 - Credit History
+4. V4 - Purpose
+5. V6 - Savings Account balance
+6. V7 - Present Employment
+7. V9 - Personal Status and Sex
+8. V14 - Other installment plans
+9. V20 - Foreign Worker
+
+```{r}
+train_final <- train[, c(1,2,3,4,6,7,9,14,20,21)]
+test_final <- test[, c(1,2,3,4,6,7,9,14,20,21)]
+
+final_model <- glm(V21 ~., family = binomial(link='logit'), data = train_final)
+
+
+
+final_predict <- predict(final_model, newdata = test_final, type ='response')
+final_ROC <- roc(test_final$V21, final_predict)
+ggroc(final_ROC) + theme_dark() + ggtitle('ROC')
+print(paste('AUC: ', auc(ROC)))
+
+final_predict <- ifelse(final_predict > 0.15, 2, 1)
+confusionMatrix(as.factor(final_predict), as.factor(test_final$V21), positive = '2')
+
+```
+
+
+
+
+Conclusion:
+After playing around with several probability thresholds, with the "tuned" model, it still couldn't quite get to the results of the all variables model. Therefore, we will express the answer in terms of the all variables model
+
+### Model Coeficients
+```{r}
+coef = as.matrix(gc_model$coefficients)
+coef
+```
+
+### Probablility Threshold
+```{r}
+cm <- confusionMatrix(as.factor(test_predict), as.factor(test$V21), positive = '2')
+cm$table
+```
+A threshold of 20% gave the best results of limiting the 5x damage of incorrectly predicting a "bad credit risk"
