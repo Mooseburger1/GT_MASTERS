@@ -1,0 +1,213 @@
+---
+title: "HW4 Q3"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+The goal of this problem is to predict the performance decay over time of the Gas Turbine (GT) compressor. The dataset contains 11934 observations. The range of decay of compressor has been sampled with a uniform grid of precision 0.001 so to have a good granularity of representation. For the compressor decay state discretization the kMc coefficient has been investigated in the domain [0.95,1]. Ship speed has been investigated sampling the range of feasible speed from 3 knots to 27 knots with a granularity of representation equal to tree knots. A series of measures (13 features) which indirectly represents of the state of the system subject to performance decay has been acquired and stored in the dataset over the parameter’s space.
+For each record it is provided:
+- A 13-feature vector containing the GT measures at steady state of the physical asset:
+    Lever position (lp) 
+    Ship speed (v) [knots]
+    Gas Turbine (GT) shaft torque (GTT) [kN m]
+    GT rate of revolutions (GTn) [rpm]
+    Gas Generator rate of revolutions (GGn) [rpm]
+    Port Propeller Torque (Tp) [kN]
+    Hight Pressure (HP) Turbine exit temperature (T48) [C]
+    GT Compressor outlet air temperature (T2) [C]
+    HP Turbine exit pressure (P48) [bar]
+    GT Compressor outlet air pressure (P2) [bar]
+    GT exhaust gas pressure (Pexh) [bar]
+    Turbine Injecton Control (TIC) [%]
+    Fuel flow (mf) [kg/s]
+- GT Compressor decay state coefficient
+The dataset is provided as "Shiptrain.csv" and "Shiptest.csv". The last column of the datasets correspond to the output we want to predict. We have split the dataset into training (80%) "Shiptrain.csv" and test (20%) "Shiptest.csv" sets. In order to predict the performance decay over time of the GT compressor and turbines, we are going to use the following models:
+1. Ridge Regression
+2. Lasso Regression 
+3. Adaptive Lasso Regression 
+4. Elastic Net Regression 
+For each of the models please do the following:
+
+* Fit the model on the training dataset.
+* Report optimal tuning parameters obtained using cross-validation.
+Note: You must tune the lambda parameter for all models and the alpha parameter
+for the elastic net regression model.
+* Report the coefficients obtained with the optimal parameters.
+* Report the Mean Square Prediction Error for the test set.
+Note that you should standardized the data.
+Conclusion: Which model will you select to predict the performance decay over time of the GT compressor and turbines? Why? 
+
+
+```{r}
+library(caret)
+library(glmnet)
+library(Metrics)
+
+set.seed(42)
+
+train <- read.csv('Shiptrain-1.csv', header=FALSE)
+test <- read.csv('Shiptest-1.csv', header=FALSE)
+
+x.train <- as.matrix(train[1:13])
+y.train <- as.matrix(train[14])
+
+x.test <- as.matrix(test[1:13])
+y.test <- as.matrix(test[14])
+```
+
+
+#### Standardized data
+```{r}
+scaler <- preProcess(x.train)
+
+x.train.scaled <- as.matrix(predict(scaler, x.train))
+x.test.scaled <- as.matrix(predict(scaler, x.test))
+```
+
+
+## Ridge Regression
+```{r}
+cv.ridge <- cv.glmnet(x.train.scaled, y.train, alpha=0, standardize=FALSE, intercept=TRUE,  family='gaussian')
+```
+
+#### Best Lambda
+```{r}
+lambda <- cv.ridge$lambda.min
+lambda
+```
+#### Train model on best lambda and report coefficients & MSE on test set
+```{r}
+ridge <- glmnet(x.train.scaled, y.train, alpha=0, standardize=FALSE, intercept=TRUE, lambda=lambda, family='gaussian')
+
+coef(ridge)
+```
+```{r}
+ridge.test.pred <- predict(ridge, x.test.scaled)
+
+mse(ridge.test.pred, y.test)
+```
+
+
+## LASSO Regression
+```{r}
+cv.lasso = cv.glmnet(x.train.scaled, y.train, family = "gaussian", alpha = 1, intercept = TRUE)
+```
+
+#### Best lambda
+```{r}
+lambda = cv.lasso$lambda.min
+lambda
+```
+#### Train model on best lambda and report coefficients & MSE on test set
+
+```{r}
+lasso <- glmnet(x.train.scaled, y.train, alpha=1, standardize=FALSE, intercept=TRUE, family="gaussian", lambda=lambda)
+
+coef(lasso)
+
+```
+```{r}
+lasso.test.predict <- predict(lasso, x.test.scaled)
+
+mse(lasso.test.predict, y.test)
+```
+## Adaptive Lasso Regression
+```{r}
+gamma = 2
+b.ols = solve(t(x.train.scaled)%*%x.train.scaled)%*%t(x.train.scaled)%*%y.train
+cv.ridge = cv.glmnet(x.train.scaled, y.train, family = "gaussian", alpha = 0, intercept = TRUE, standardize=FALSE)
+l.ridge = cv.ridge$lambda.min
+b.ridge = matrix(coef(ridge, s = l.ridge))
+w1 = 1/abs(b.ols)^gamma
+w2 = 1/abs(b.ridge)^gamma
+alasso1.cv = cv.glmnet(x.train.scaled, y.train, family = "gaussian", alpha = 1, intercept = TRUE, penalty.factor = w1, standardize=FALSE, maxit=200000)
+alasso2.cv = cv.glmnet(x.train.scaled, y.train, family = "gaussian", alpha = 1, intercept = TRUE, penalty.factor = w2, standardize=FALSE, maxit=200000)
+
+```
+#### Best Lambda
+```{r}
+lambda1 = alasso1.cv$lambda.min
+lambda2 = alasso2.cv$lambda.min
+print(paste("Best OLS adaptive lambda: ", lambda1))
+print(paste("Best Ridge adaptive lambda: ", lambda2))
+```
+#### Train model on best lambda and report coefficients & MSE on test set
+```{r}
+alasso1 = glmnet(x.train.scaled, y.train, family = "gaussian", alpha = 1, lambda=lambda1, intercept = TRUE, penalty.factor = w1, standardize=FALSE, maxit=200000)
+alasso2 = glmnet(x.train.scaled, y.train, family = "gaussian", alpha = 1, lambda=lambda2, intercept = TRUE, penalty.factor = w2, standardize=FALSE, maxit=200000)
+coef.ols = matrix(coef(alasso1))
+coef.ridge = matrix(coef(alasso2))
+cbind.data.frame(coef.ols, coef.ridge)
+```
+
+
+```{r}
+alasso.ols.predict <- predict(alasso1, x.test.scaled)
+alasso.ridge.predict <- predict(alasso2, x.test.scaled)
+
+alasso.ols.mse <- mse(alasso.ols.predict, y.test)
+alasso.ridge.mse <- mse(alasso.ridge.predict, y.test)
+
+cbind.data.frame(alasso.ols.mse, alasso.ridge.mse)
+```
+
+## Elastic Net
+```{r}
+alphas <- seq(0.01,0.99,by=0.01)
+
+mses <- array(numeric())
+as <- array(numeric())
+lams <- array(numeric())
+
+for (a in alphas){
+  cv.enet <- cv.glmnet(x.train.scaled, y.train, alpha=a, standardize=FALSE, intercept=TRUE,  family='gaussian')
+  
+  lambda <- cv.enet$lambda.min
+  
+  enet <- glmnet(x.train.scaled, y.train, alpha=a, standardize=FALSE, intercept=TRUE,  family='gaussian', lambda=lambda)
+  
+  enet.pred <- predict(enet, x.train.scaled)
+  
+  enet.mse <- mse(enet.pred, y.train)
+  
+  mses <- append(mses, enet.mse)
+  as <- append(as, a)
+  lams <- append(lams, lambda)
+}
+
+```
+
+```{r}
+plot(as, mses, xlab='alphas', ylab = 'mse')
+```
+
+#### Best Lambda & Alpha
+```{r}
+idx.lowest.mse <- which.min(mses)
+
+best.alpha <- as[idx.lowest.mse]
+best.lambda <- lams[idx.lowest.mse]
+
+cbind.data.frame(best.lambda, best.alpha)
+```
+
+#### Train model on best lambda & alpha and report coefficients & MSE on test set
+```{r}
+enet <- glmnet(x.train.scaled, y.train, alpha=best.alpha, standardize=FALSE, intercept=TRUE,  family='gaussian', lambda=best.lambda)
+
+coef(enet)
+
+```
+
+```{r}
+enet.test.pred <- predict(enet, x.test.scaled)
+
+mse(enet.test.pred, y.test)
+```
+
+
+## Results
+
+Either Lasso or Elastic Net would be the model of choice. Elastic Net however produced a "best alpha" of 0.99 which is more or less a Lasso model. This is why the proivded nearly simliary MSE on the test set of 3.1e-5
