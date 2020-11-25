@@ -5,6 +5,7 @@ from Utils import makeLogger
 logger = makeLogger(__file__)
 
 import numpy as np
+import copy
 
 class Player:
     '''
@@ -27,6 +28,7 @@ class Player:
         self.broke = False if chips > 0 else True
         self.name = name
         self.winnings_per_hand = []
+        self.chips_per_hand = [chips]
         
         
     def __repr__(self):
@@ -64,23 +66,32 @@ class Player:
         Method the player utilizes to place bets. The player bets with respect to
         the betting strategy the player was instantiated with
         '''
-        if self.broke: print('Im broke')
+        if self.broke: print('{} is broke!'.format(self.name))
         if not self.broke:
             amount = self.betting_strategy.bet()
 
             #adjust the amount so that it isn't greater than the amount actually held by player
-            amount = min(self.chips, amount)
+            amount = min(copy.deepcopy(self.chips), amount)
             
             #reduce player's chip amount according to bet size
             self.chips -= amount
             
             #if no more chips, set flag to broke
             if self.chips <= 0: self.broke = True
-                
+
             return amount
         
         else:
             return -1
+
+    def track_winnings(self, winnings: int):
+        self.winnings_per_hand.append(winnings)
+        self.chips_per_hand.append(self.chips)
+
+    def pay(self, winnings):
+        self.chips += winnings
+
+
 
 class player_name_generator:
     '''
@@ -195,8 +206,9 @@ class BlackJack:
         
         for i in range(2):
             #for each player at the table
-            for p in range(len(self.players)):
-                cards[p].append(self._shoe._deal())
+            for pos, player in enumerate(self.players):
+                if player.broke: continue
+                else:cards[pos].append(self._shoe._deal())
                 
         dealers_cards.append(self._shoe._deal())
                 
@@ -254,7 +266,46 @@ class BlackJack:
             self.players.insert(pos, my_player)
             self.my_player_pos = pos
             logger.info('Your player is at position {} out of 7 seats at the table'.format(pos))
-            
+
+    def evaluate(self, cards, bets):
+        players_cards = cards[0]
+        dealers_cards = cards[1]
+        dealer_score = np.sum(dealers_cards)
+
+        if dealer_score > 21:
+            for pos, player in enumerate(self.players):
+                player_score = np.sum(players_cards[pos])
+                if player_score <= 21:
+                    winnings= bets[pos] * 2
+                    player.pay(winnings)
+                    player.track_winnings(winnings)
+
+                else:
+                    losses = -bets[pos]
+                    player.track_winnings(losses)
+                    continue
+
+        else:
+            for pos, player in enumerate(self.players):
+                player_score = np.sum(players_cards[pos])
+                
+                if player_score <= 21 and player_score > dealer_score:
+                    winnings = bets[pos] * 2
+                    player.pay(winnings)
+                    player.track_winnings(winnings)
+
+                elif player_score <= 21 and player_score == dealer_score:
+                    winnings = bets[pos]
+                    player.pay(winnings)
+                    player.track_winnings(winnings)
+
+                else:
+                    losses = bets[pos]
+                    player.track_winnings(losses)
+                    continue
+
+
+
     def summary(self):
         summary = []
         for pos, p in enumerate(self.players):

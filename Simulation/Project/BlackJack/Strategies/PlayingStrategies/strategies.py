@@ -45,7 +45,7 @@ class dealer_strategy_stand_on_17:
         
         
         #follow 'stand on 17 or higher' strategy
-        return stand_on_17_or_higher._decision(cards=dealers_cards)
+        return stand_on_17_or_higher._decision(cards=cards)
         
         
     def __repr__(self):
@@ -65,8 +65,11 @@ class stand_on_17_or_higher:
         Static method that advises player to stand for any total >= 17.
         If player's cards total <17, it will advise the player to "hit"
         '''
-        total = np.sum(cards)
-        
+
+        players_cards= cards[0]
+
+        total = np.sum(players_cards)
+
         if total >= 17: return 'stand'
         else: return 'hit'
         
