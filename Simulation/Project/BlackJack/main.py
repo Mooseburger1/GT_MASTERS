@@ -5,16 +5,17 @@ from Utils import makeLogger
 logger = makeLogger(__file__)
 
 from Game import Player, BlackJack
-from Strategies.BettingStrategies import bet_min
+from Strategies.BettingStrategies import bet_min, bet_max, bet_uniform_random
 from Strategies.PlayingStrategies import always_stand, dealer_strategy_stand_on_17, stand_on_17_or_higher
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 SEED = 42
-NUM_OF_DECKS=8 #8 is max 1 is MIN
+NUM_OF_DECKS=2 #8 is max 1 is MIN
 NUM_OF_OTHER_PLAYERS=3 #6 is max
 SHOE_CUT = 0.75 #1.0 is max
-NUM_OF_HANDS = 1000
+NUM_OF_HANDS = 10000
 CHIPS = 5_000
 TABLE_MIN =100
 TABLE_MAX = 1_000
@@ -36,7 +37,7 @@ table = BlackJack(num_of_decks=NUM_OF_DECKS,
                   dealer=dealer)
 
 player1 = Player(strategy=stand_on_17_or_higher,
-                 betting_strategy=bet_min,
+                 betting_strategy=bet_uniform_random,
                  chips=10_000,
                  name='Scott')
 
@@ -50,8 +51,8 @@ table.add_player(player2, my_player=False)
 
 logger.info(table.summary())
 
+
 while not player1.broke and NUM_OF_HANDS > 0:
-    print('Hand No: {}'.format(NUM_OF_HANDS))
     bets = table.table_bets()
 
     players_cards, dealers_cards = table.deal()
@@ -83,18 +84,22 @@ while not player1.broke and NUM_OF_HANDS > 0:
 
         if decision is 'hit':
             dealers_cards.append(table.hit())
-
+    
 
     table.evaluate(cards=(players_cards, dealers_cards), bets=bets)
-
+    print('Dealers cards: {}\nMy cards: {}'.format(dealers_cards, players_cards[0]))
+    print('Bet: {}\nChips: {}'.format(bets[0], table.players[0].chips))
     NUM_OF_HANDS-=1
+
+
 
 plt.subplots(nrows=1, ncols=2,figsize=(15,8))
 ax1 = plt.subplot(121)
 ax2 = plt.subplot(122)
 
-for player in table.players:
-    ax1.plot(range(len(player.winnings_per_hand)), player.winnings_per_hand, marker='*', label=player.name)
+for pos, player in enumerate(table.players):
+    colors=['rx', 'gx']
+    ax1.stem(range(len(player.winnings_per_hand)), player.winnings_per_hand, label=player.name, markerfmt=colors[pos])
     ax1.legend()
     ax1.set_xlabel('Hand Number')
     ax1.set_ylabel('Winnings/Losses')

@@ -85,11 +85,11 @@ class Player:
             return -1
 
     def track_winnings(self, winnings: int):
-        self.winnings_per_hand.append(winnings)
+        self.winnings_per_hand.append(winnings[0])
         self.chips_per_hand.append(self.chips)
 
     def pay(self, winnings):
-        self.chips += winnings
+        self.chips += winnings[0]
 
 
 
@@ -274,35 +274,38 @@ class BlackJack:
 
         if dealer_score > 21:
             for pos, player in enumerate(self.players):
-                player_score = np.sum(players_cards[pos])
-                if player_score <= 21:
-                    winnings= bets[pos] * 2
-                    player.pay(winnings)
-                    player.track_winnings(winnings)
+                if not player.broke:
+                    player_score = np.sum(players_cards[pos])
+                    if player_score <= 21:
+                        winnings= bets[pos] * 2
+                        player.pay(winnings)
+                        player.track_winnings(winnings)
 
-                else:
-                    losses = -bets[pos]
-                    player.track_winnings(losses)
-                    continue
+                    else:
+                        losses = -bets[pos]
+                        player.track_winnings(losses)
+                        continue
 
         else:
             for pos, player in enumerate(self.players):
-                player_score = np.sum(players_cards[pos])
-                
-                if player_score <= 21 and player_score > dealer_score:
-                    winnings = bets[pos] * 2
-                    player.pay(winnings)
-                    player.track_winnings(winnings)
+                if not player.broke:
+                    player_score = np.sum(players_cards[pos])
+                    
+                    if player_score <= 21 and player_score > dealer_score:
+                        winnings = bets[pos] * 2
+                        player.pay(winnings)
+                        player.track_winnings(winnings)
 
-                elif player_score <= 21 and player_score == dealer_score:
-                    winnings = bets[pos]
-                    player.pay(winnings)
-                    player.track_winnings(winnings)
+                    elif player_score <= 21 and player_score == dealer_score:
+                        winnings = bets[pos]
+                        player.pay(winnings)
+                        player.track_winnings(winnings)
 
-                else:
-                    losses = bets[pos]
-                    player.track_winnings(losses)
-                    continue
+                    else:
+                        print('Bust')
+                        losses = -bets[pos]
+                        player.track_winnings(losses)
+                        continue
 
 
 

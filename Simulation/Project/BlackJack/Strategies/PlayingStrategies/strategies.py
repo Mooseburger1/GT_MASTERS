@@ -20,6 +20,8 @@ class always_stand:
         return 'Always Stand'
 
 
+
+
 class dealer_strategy_stand_on_17:
     '''
     This class acts as the strategy for the dealer during blackjack. It is normal
