@@ -128,12 +128,15 @@ class Cards:
         
         #combine deck
         self.deck = np.concatenate((aces_and_nums, faces))
+
+        self._shuffle_deck()
         
     def __repr__(self):
         return 'Deck of {} cards\n{} cards remaining'.format(52*self.num_of_decks, len(self.deck))
         
     def _shuffle_deck(self):
         
+        np.random.shuffle(self.deck)
         np.random.shuffle(self.deck)
         
         return self

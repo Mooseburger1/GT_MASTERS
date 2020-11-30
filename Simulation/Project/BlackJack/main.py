@@ -5,17 +5,17 @@ from Utils import makeLogger
 logger = makeLogger(__file__)
 
 from Game import Player, BlackJack
-from Strategies.BettingStrategies import bet_min, bet_max, bet_uniform_random
-from Strategies.PlayingStrategies import always_stand, dealer_strategy_stand_on_17, stand_on_17_or_higher
+from Strategies.BettingStrategies import bet_min, bet_max, bet_uniform_random, bet_triangular, bet_normal
+from Strategies.PlayingStrategies import always_stand, dealer_strategy_stand_on_17, stand_on_17_or_higher, dealer_plus_10, stand_on_16_or_higher, stand_on_18_or_higher, fifty_fifty
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 SEED = 42
-NUM_OF_DECKS=2 #8 is max 1 is MIN
+NUM_OF_DECKS=8 #8 is max 1 is MIN
 NUM_OF_OTHER_PLAYERS=3 #6 is max
 SHOE_CUT = 0.75 #1.0 is max
-NUM_OF_HANDS = 10000
+NUM_OF_HANDS = 50
 CHIPS = 5_000
 TABLE_MIN =100
 TABLE_MAX = 1_000
@@ -36,7 +36,7 @@ table = BlackJack(num_of_decks=NUM_OF_DECKS,
                   table_max=TABLE_MAX,
                   dealer=dealer)
 
-player1 = Player(strategy=stand_on_17_or_higher,
+player1 = Player(strategy=stand_on_16_or_higher,
                  betting_strategy=bet_uniform_random,
                  chips=10_000,
                  name='Scott')
