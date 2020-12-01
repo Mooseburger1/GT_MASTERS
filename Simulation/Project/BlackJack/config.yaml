@@ -1,0 +1,99 @@
+# Set seed for reproducibility
+RANDOM_SEED: 42
+
+# Number of standard 52 card decks in the card shoe
+# 1 is minimum 8 is maximum
+NUMBER_OF_DECKS: 8
+
+# Percentage of cards used before shoe is reshuffled - Casino standard is 75%
+SHOE_CUT_PERCENTAGE: 0.75
+
+# Table Minimum bet
+TABLE_MIN_BET: 100
+
+# Table Maximum bet
+TABLE_MAX_BET: 1000
+
+# Number of other players at the table
+# 0 is minimum 7 is maximum
+NUMBER_OF_OTHERS: 1
+
+# Unique name for your simulated player
+PLAYER_NAME: Scott
+
+# Maximum number of hands to play
+NUMBER_OF_HANDS: 100
+
+# Number of chips to start with
+CHIPS: 5000
+
+# Position your player sits at the the table
+PLAYER_POSITION: 0
+
+# Triangular Betting Strategy
+#############################
+# BETTING:
+#  STRATEGY: TRIANGULAR
+#  LEFT: 0
+#  MED: 0.5
+#  RIGHT: 1.0
+
+# Always Bet Minimum Strategy
+#############################
+# BETTING:
+#  STRATEGY: MINIMUM
+
+# Always Bet Maximum Strategy
+#############################
+# BETTING:
+#  STRATEGY: MAXIMUM
+
+# Bet Uniform Random
+####################
+# BETTING:
+#  STRATEGY: UNIFORM
+
+# Normal Betting Strategy
+#########################
+# BETTING:
+#  STRATEGY: NORMAL
+#  MEAN: 0.5
+#  STD: 0.15
+
+# Exponential Betting Strategy
+##############################
+# BETTING:
+#  STRATEGY: EXPONENTIAL
+#  LAMBDA: 0.5
+
+
+BETTING: 
+  STRATEGY: EXPONENTIAL
+  LAMBDA: 0.5
+
+
+# Always Stand Playing Strategy
+###############################
+# PLAYING_STRATEGY: STAND
+
+# Stand on 16 or Higher
+###############################
+# PLAYING_STRATEGY: 16+
+
+# Stand on 17 or Higher
+###############################
+# PLAYING_STRATEGY: 17+
+
+# Stand on 18 or Higher
+###############################
+# PLAYING_STRATEGY: 18+
+
+# 50/50 Chance Hit or Stand
+###############################
+# PLAYING_STRATEGY: 50/50
+
+# Dealer Show Plus 10
+###############################
+# PLAYING_STRATEGY: D+10
+
+PLAYING_STRATEGY: D+10

@@ -110,19 +110,19 @@ class normal:
 
 
 class bet_exponential:
-    def __init__(self, lamda):
-        assert (0 <= lamda <= 1), 'lamda for exponential distribution must be 0 <= lamda <= 1'
+    def __init__(self, lam):
+        assert (0 <= lam <= 1), 'lam for exponential distribution must be 0 <= lam <= 1'
         
-        self.lamda = lamda
+        self.lam = lam
 
 
     def initialize(self):
-        return exponential(lamda=self.lamda)
+        return exponential(lam=self.lam)
 
 
 class exponential:
-    def __init__(self, lamda):
-        self.lamda = lamda
+    def __init__(self, lam):
+        self.lam = lam
         
 
     def __call__(self, Player):
@@ -131,23 +131,23 @@ class exponential:
         return self
 
     def bet(self):
-        return np.min([np.max([self.table_min, round(np.random.exponential(scale=self.lamda) * self.table_max, -1)]), self.table_max])
+        return np.min([np.max([self.table_min, round(np.random.exponential(scale=self.lam) * self.table_max, -1)]), self.table_max])
 
 
 class bet_poisson:
-    def __init__(self, lamda):
-        assert (0 <= lamda <= 1), 'lamda for poisson distribution must be 0 <= lamda <= 1'
+    def __init__(self, lam):
+        assert (0 <= lam <= 1), 'lam for poisson distribution must be 0 <= lam <= 1'
         
-        self.lamda = lamda
+        self.lam = lam
 
 
     def initialize(self):
-        return poisson(lamda=self.lamda)
+        return poisson(lam=self.lam)
 
 
 class poisson:
-    def __init__(self, lamda):
-        self.lamda = lamda
+    def __init__(self, lam):
+        self.lam = lam
         
 
     def __call__(self, Player):
@@ -156,7 +156,7 @@ class poisson:
         return self
 
     def bet(self):
-        return np.min([np.max([self.table_min, round(np.random.poisson(lam=self.lamda) * self.table_max, -1)]), self.table_max])
+        return np.min([np.max([self.table_min, round(np.random.poisson(lam=self.lam) * self.table_max, -1)]), self.table_max])
 
 
 
