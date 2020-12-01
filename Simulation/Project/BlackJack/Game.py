@@ -1,7 +1,7 @@
 from os import sys, path
 sys.path.append(path.dirname(__file__))
 
-from Utils import makeLogger
+from Utils import makeLogger, strategy_parser
 logger = makeLogger(__file__)
 
 import numpy as np
@@ -32,7 +32,7 @@ class Player:
         
         
     def __repr__(self):
-        return "{}\nChips:    ${}\nStrategy: {}\n".format(self.name, self.chips, self.strategy)
+        return "{}\nChips:    ${}\nPlaying Strategy: {}\nBetting Strategy: {}".format(self.name, self.chips, self.strategy, self.betting_strategy)
     
     def _set_table_rules(self, min_, max_):
         '''
@@ -310,12 +310,50 @@ class BlackJack:
                         player.track_winnings(losses)
                         continue
 
-
-
     def summary(self):
         summary = []
         for pos, p in enumerate(self.players):
             summary.append('\nSeat: {}\n------------------------\n{}\n************************************\n'.format(pos,p))
 
         return '\n'.join(summary)
+
+
+class Player_Factory:
+
+    def __init__(self, player_info, chips):
+        self.info = player_info
+
+        self.name_generator = player_name_generator()
+
+        self.chips = chips
+
+        self.players = []
+
+        self._create_players()
+
+    def _create_players(self):
+
+        for player in self.info:
+
+            data = self.info[player]
+
+            betting = data['BETTING']
+            strategy = data['PLAYING_STRATEGY']
+
+            betting_strategy, playing_strategy = strategy_parser(betting, strategy)
+
+            name = self.name_generator._sample_name()
+
+            self.players.append( Player(strategy=playing_strategy, betting_strategy=betting_strategy, chips=self.chips, name=name) )
+
+    def __iter__(self):
+
+        n = len(self.players)
+        i = 0
+        while i != n:
+            yield self.players[i]
+
+            i += 1
+
+
 

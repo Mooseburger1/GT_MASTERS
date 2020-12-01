@@ -1,6 +1,9 @@
 # Set seed for reproducibility
 RANDOM_SEED: 42
 
+# Set the number of trials
+NUMBER_OF_TRIALS: 5
+
 # Number of standard 52 card decks in the card shoe
 # 1 is minimum 8 is maximum
 NUMBER_OF_DECKS: 8
@@ -13,10 +16,6 @@ TABLE_MIN_BET: 100
 
 # Table Maximum bet
 TABLE_MAX_BET: 1000
-
-# Number of other players at the table
-# 0 is minimum 7 is maximum
-NUMBER_OF_OTHERS: 1
 
 # Unique name for your simulated player
 PLAYER_NAME: Scott
@@ -96,4 +95,24 @@ BETTING:
 ###############################
 # PLAYING_STRATEGY: D+10
 
-PLAYING_STRATEGY: D+10
+# Random
+###############################
+# PLAYING_STRATEGY: RANDOM
+
+PLAYING_STRATEGY: 16+
+
+
+
+# Other players at the table and their strategies
+# 7 Maximum other players
+# Set to NONE if no other players desired
+# OTHER_PLAYERS: NONE
+OTHER_PLAYERS:
+    ONE:
+        BETTING:
+            STRATEGY: RANDOM
+        PLAYING_STRATEGY: RANDOM
+    TWO:
+        BETTING:
+            STRATEGY: MINIMUM
+        PLAYING_STRATEGY: STAND

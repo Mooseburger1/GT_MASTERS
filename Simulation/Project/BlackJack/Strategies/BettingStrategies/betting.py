@@ -64,6 +64,9 @@ class bet_triangular:
     def initialize(self):
         return triangular(left=self.left, med=self.med, right=self.right)
 
+    def __repr__(self):
+        return 'TRIANGULAR({}, {}, {})'.format(self.left, self.med, self.right)
+
 
 class triangular:
     def __init__(self, left, med, right):
@@ -79,6 +82,11 @@ class triangular:
     def bet(self):
         return np.max([self.table_min, round(np.random.triangular(left=self.left, mode=self.med, right=self.right) * self.table_max, -1)])
 
+    def __repr__(self):
+        return 'TRIANGULAR({}, {}, {})'.format(self.left, self.med, self.right)
+
+    
+
 class bet_normal:
     def __init__(self, mean, std):
         assert (0 <= mean <= 1), 'mean for normal distribution must be 0 <= mean <= 1'
@@ -93,6 +101,8 @@ class bet_normal:
     def initialize(self):
         return normal(mean=self.mean, std=self.std)
 
+    def __repr__(self):
+        return 'NORMAL({}, {})'.format(self.mean, self.std)
 
 class normal:
     def __init__(self, mean, std):
@@ -108,6 +118,9 @@ class normal:
     def bet(self):
         return np.min([np.max([self.table_min, round(np.random.normal(loc=self.mean, scale=self.std) * self.table_max, -1)]), self.table_max])
 
+    def __repr__(self):
+        return 'NORMAL({}, {})'.format(self.mean, self.std)
+
 
 class bet_exponential:
     def __init__(self, lam):
@@ -118,6 +131,9 @@ class bet_exponential:
 
     def initialize(self):
         return exponential(lam=self.lam)
+
+    def __repr__(self):
+        return 'EXPONENTIAL({})'.format(self.lam)
 
 
 class exponential:
@@ -132,6 +148,9 @@ class exponential:
 
     def bet(self):
         return np.min([np.max([self.table_min, round(np.random.exponential(scale=self.lam) * self.table_max, -1)]), self.table_max])
+
+    def __repr__(self):
+        return 'EXPONENTIAL({})'.format(self.lam)
 
 
 class bet_poisson:
