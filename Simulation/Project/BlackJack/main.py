@@ -62,11 +62,14 @@ for player in factory:
     table.add_player(player, my_player=False)
 
 logger.info(table.summary())
-
+hands = 0
+resets = []
 if __name__ == '__main__':
 
-    for _ in range(NUMBER_OF_TRIALS):
-        while not MyPlayer.broke and NUM_OF_HANDS > 0:
+    for trial in range(NUMBER_OF_TRIALS):
+        print('################### TRIAL {} ###################'.format(trial))
+        while not MyPlayer.broke and hands < NUM_OF_HANDS:
+
             bets = table.table_bets()
 
             players_cards, dealers_cards = table.deal()
@@ -103,25 +106,43 @@ if __name__ == '__main__':
             table.evaluate(cards=(players_cards, dealers_cards), bets=bets)
             print('Dealers cards: {}\nMy cards: {}'.format(dealers_cards, players_cards[0]))
             print('Bet: {}\nChips: {}'.format(bets[0], table.players[0].chips))
-            NUM_OF_HANDS-=1
+            hands += 1
+
+        table.reset_game()
+        resets.append(hands)
+        hands=0
 
 
 
-        plt.subplots(nrows=1, ncols=2,figsize=(15,8))
-        ax1 = plt.subplot(121)
-        ax2 = plt.subplot(122)
+    plt.subplots(nrows=2, ncols=2,figsize=(15,8))
+    ax1 = plt.subplot(221)
+    ax2 = plt.subplot(222)
+    ax3 = plt.subplot(223)
+    ax4 = plt.subplot(224)
 
-        for pos, player in enumerate(table.players):
-            colors=['rx', 'gx', 'bx']
-            ax1.stem(range(len(player.winnings_per_hand)), player.winnings_per_hand, label=player.name, markerfmt=colors[pos])
-            ax1.legend()
-            ax1.set_xlabel('Hand Number')
-            ax1.set_ylabel('Winnings/Losses')
-            ax1.set_title('Winnings per Hand')
+    player = table.players[0]
+    ax1.bar(range(len(player.winnings_per_hand)), player.winnings_per_hand, label=player.name, color=['green' if x > 0 else 'red' for x in player.winnings_per_hand])
+    ax1.set_xlabel('Hand Number')
+    ax1.set_ylabel('Winnings/Losses')
+    ax1.set_title('Winnings per Hand')
 
-            ax2.plot(range(len(player.chips_per_hand)), player.chips_per_hand, marker='*', label=player.name)
-            ax2.legend()
-            ax2.set_xlabel('Hand Number')
-            ax2.set_ylabel('Chips Total')
-            ax2.set_title('Chip Total per Hand')
-        plt.show()
+    for pos, player in enumerate(table.players):
+        ax2.plot(range(len(player.chips_per_hand)), player.chips_per_hand, marker='*', label=player.name)
+        ax2.legend()
+        ax2.set_xlabel('Hand Number')
+        ax2.set_ylabel('Chips Total')
+        ax2.set_title('Chip Total per Hand')
+
+    for pos, hand in enumerate(resets):
+        if pos != 0:
+            hand = hand + np.sum( resets[:pos] )
+
+
+        ax2.plot([hand]*(CHIPS*2), range(CHIPS*2), color='k', ls='--')
+        
+
+    ax3.hist(table.players[0].totals_per_hand, color='k')
+    ax4.bar(['wins', 'losses'], [table.players[0].wins, table.players[0].losses], color=['black','red'])
+    plt.show()
+
+    print(resets)

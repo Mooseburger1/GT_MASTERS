@@ -24,11 +24,15 @@ class Player:
 
         self.strategy = strategy()
         self.betting_strategy = betting_strategy
+        self.starting_chips = chips
         self.chips = chips
         self.broke = False if chips > 0 else True
         self.name = name
         self.winnings_per_hand = []
         self.chips_per_hand = [chips]
+        self.totals_per_hand = []
+        self.wins = 0
+        self.losses = 0
         
         
     def __repr__(self):
@@ -84,9 +88,16 @@ class Player:
         else:
             return -1
 
-    def track_winnings(self, winnings: int):
+    def track_winnings(self, winnings: int, total: int):
         self.winnings_per_hand.append(winnings[0])
         self.chips_per_hand.append(self.chips)
+        self.totals_per_hand.append(total)
+
+    def add_loss(self):
+        self.losses += 1
+
+    def add_win(self):
+        self.wins += 1
 
     def pay(self, winnings):
         self.chips += winnings[0]
@@ -282,12 +293,17 @@ class BlackJack:
                     if player_score <= 21:
                         winnings= bets[pos] * 2
                         player.pay(winnings)
-                        player.track_winnings(winnings)
+                        player.track_winnings(winnings=winnings, total=player_score)
+                        player.add_win()
+                        
 
                     else:
                         losses = -bets[pos]
-                        player.track_winnings(losses)
+                        player.track_winnings(winnings=losses, total=player_score)
+                        player.add_loss()
                         continue
+                else:
+                    player.track_winnings(winnings=[0], total=0)
 
         else:
             for pos, player in enumerate(self.players):
@@ -297,18 +313,22 @@ class BlackJack:
                     if player_score <= 21 and player_score > dealer_score:
                         winnings = bets[pos] * 2
                         player.pay(winnings)
-                        player.track_winnings(winnings)
+                        player.track_winnings(winnings=winnings, total=player_score)
+                        player.add_win()
 
                     elif player_score <= 21 and player_score == dealer_score:
                         winnings = bets[pos]
                         player.pay(winnings)
-                        player.track_winnings(winnings)
+                        player.track_winnings(winnings=winnings, total=player_score)
+                        player.add_win()
 
                     else:
-                        print('Bust')
                         losses = -bets[pos]
-                        player.track_winnings(losses)
+                        player.track_winnings(winnings=losses, total=player_score)
+                        player.add_loss()
                         continue
+                else:
+                    player.track_winnings(winnings=[0], total=0)
 
     def summary(self):
         summary = []
@@ -317,6 +337,12 @@ class BlackJack:
 
         return '\n'.join(summary)
 
+    def reset_game(self):
+        for player in self.players:
+            player.chips = player.starting_chips
+            player.broke = False
+
+        self._shoe._reset_deck()
 
 class Player_Factory:
 

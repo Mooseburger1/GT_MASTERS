@@ -2,7 +2,7 @@
 RANDOM_SEED: 42
 
 # Set the number of trials
-NUMBER_OF_TRIALS: 5
+NUMBER_OF_TRIALS: 10
 
 # Number of standard 52 card decks in the card shoe
 # 1 is minimum 8 is maximum
@@ -67,8 +67,10 @@ PLAYER_POSITION: 0
 
 
 BETTING: 
-  STRATEGY: EXPONENTIAL
-  LAMBDA: 0.5
+  STRATEGY: TRIANGULAR
+  LEFT: 0
+  MED: 0.5
+  RIGHT: 1.0
 
 
 # Always Stand Playing Strategy
@@ -99,7 +101,7 @@ BETTING:
 ###############################
 # PLAYING_STRATEGY: RANDOM
 
-PLAYING_STRATEGY: 16+
+PLAYING_STRATEGY: 17+
 
 
 
