@@ -1,14 +1,15 @@
 from os import sys, path
 sys.path.append(path.dirname(__file__))
 
-from Utils import makeLogger, strategy_parser
+from Utils import makeLogger, strategy_parser, Dapp, open_browser
 logger = makeLogger(__file__)
 
 from Game import Player, BlackJack, Player_Factory
 from Strategies.PlayingStrategies import dealer_strategy_stand_on_17
 import numpy as np
 import yaml
-import matplotlib.pyplot as plt
+
+from threading import Timer
 
 
 
@@ -104,45 +105,47 @@ if __name__ == '__main__':
             
 
             table.evaluate(cards=(players_cards, dealers_cards), bets=bets)
-            print('Dealers cards: {}\nMy cards: {}'.format(dealers_cards, players_cards[0]))
-            print('Bet: {}\nChips: {}'.format(bets[0], table.players[0].chips))
+            logger.info('\nDealers cards: {}\nMy cards: {}\nBet: {}\nChips: {}'.format(dealers_cards, players_cards[0],bets[0], table.players[0].chips))
+            # print('Bet: {}\nChips: {}'.format(bets[0], table.players[0].chips))
             hands += 1
 
         table.reset_game()
-        resets.append(hands)
+        resets.append(hands+1)
         hands=0
 
 
+    Timer(3, open_browser).start()
+    a = Dapp(table, resets)
+    a.launch_dashboard()
+    # plt.subplots(nrows=2, ncols=2,figsize=(15,8))
+    # ax1 = plt.subplot(221)
+    # ax2 = plt.subplot(222)
+    # ax3 = plt.subplot(223)
+    # ax4 = plt.subplot(224)
 
-    plt.subplots(nrows=2, ncols=2,figsize=(15,8))
-    ax1 = plt.subplot(221)
-    ax2 = plt.subplot(222)
-    ax3 = plt.subplot(223)
-    ax4 = plt.subplot(224)
+    # player = table.players[0]
+    # ax1.bar(range(len(player.winnings_per_hand)), player.winnings_per_hand, label=player.name, color=['green' if x > 0 else 'red' for x in player.winnings_per_hand])
+    # ax1.set_xlabel('Hand Number')
+    # ax1.set_ylabel('Winnings/Losses')
+    # ax1.set_title('Winnings per Hand')
 
-    player = table.players[0]
-    ax1.bar(range(len(player.winnings_per_hand)), player.winnings_per_hand, label=player.name, color=['green' if x > 0 else 'red' for x in player.winnings_per_hand])
-    ax1.set_xlabel('Hand Number')
-    ax1.set_ylabel('Winnings/Losses')
-    ax1.set_title('Winnings per Hand')
+    # for pos, player in enumerate(table.players):
+    #     ax2.plot(range(len(player.chips_per_hand)), player.chips_per_hand, marker='*', label=player.name)
+    #     ax2.legend()
+    #     ax2.set_xlabel('Hand Number')
+    #     ax2.set_ylabel('Chips Total')
+    #     ax2.set_title('Chip Total per Hand')
 
-    for pos, player in enumerate(table.players):
-        ax2.plot(range(len(player.chips_per_hand)), player.chips_per_hand, marker='*', label=player.name)
-        ax2.legend()
-        ax2.set_xlabel('Hand Number')
-        ax2.set_ylabel('Chips Total')
-        ax2.set_title('Chip Total per Hand')
-
-    for pos, hand in enumerate(resets):
-        if pos != 0:
-            hand = hand + np.sum( resets[:pos] )
+    # for pos, hand in enumerate(resets):
+    #     if pos != 0:
+    #         hand = hand + np.sum( resets[:pos] )
 
 
-        ax2.plot([hand]*(CHIPS*2), range(CHIPS*2), color='k', ls='--')
+    #     ax2.plot([hand]*(CHIPS*2), range(CHIPS*2), color='k', ls='--')
         
 
-    ax3.hist(table.players[0].totals_per_hand, color='k')
-    ax4.bar(['wins', 'losses'], [table.players[0].wins, table.players[0].losses], color=['black','red'])
-    plt.show()
+    # ax3.hist(table.players[0].totals_per_hand, color='k')
+    # ax4.bar(['wins', 'losses'], [table.players[0].wins, table.players[0].losses], color=['black','red'])
+    # plt.show()
 
-    print(resets)
+
