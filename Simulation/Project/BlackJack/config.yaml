@@ -111,15 +111,15 @@ OTHER_PLAYERS:
         PLAYING_STRATEGY: RANDOM
     TWO:
         BETTING:
-            STRATEGY: MINIMUM
+            STRATEGY: RANDOM
         PLAYING_STRATEGY: RANDOM
     THREE:
         BETTING:
-            STRATEGY: MINIMUM
+            STRATEGY: RANDOM
         PLAYING_STRATEGY: RANDOM
     FOUR:
         BETTING:
-            STRATEGY: MINIMUM
+            STRATEGY: RANDOM
         PLAYING_STRATEGY: RANDOM
     # FIVE:
     #     BETTING:

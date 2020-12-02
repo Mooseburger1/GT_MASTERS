@@ -27,7 +27,6 @@ CHIPS = data['CHIPS']
 TABLE_MIN = data['TABLE_MIN_BET']
 TABLE_MAX = data['TABLE_MAX_BET']
 NAME = data['PLAYER_NAME']
-PLAYER_POS = data['PLAYER_POSITION']
 BETTING = data['BETTING']
 PLAYING_STRATEGY = data['PLAYING_STRATEGY']
 NUMBER_OF_TRIALS = data['NUMBER_OF_TRIALS']
@@ -109,43 +108,24 @@ if __name__ == '__main__':
             # print('Bet: {}\nChips: {}'.format(bets[0], table.players[0].chips))
             hands += 1
 
+        if trial > 0:
+            lo = np.sum(resets)
+        else:
+            lo = 0
         table.reset_game()
-        resets.append(hands+1)
+        resets.append(hands)
+        hi = np.sum(resets)
+        table.players[0].record_max(lo,hi)
         hands=0
 
+    
+    Timer(1, open_browser).start()
+    info = '''
+    ##################################################################
+    # Starting Dashboard - To terminate application press `Ctrl + c` #
+    ##################################################################
+    '''
+    logger.warning(info)
+    Dapp(table, resets).launch_dashboard()
 
-    Timer(3, open_browser).start()
-    a = Dapp(table, resets)
-    a.launch_dashboard()
-    # plt.subplots(nrows=2, ncols=2,figsize=(15,8))
-    # ax1 = plt.subplot(221)
-    # ax2 = plt.subplot(222)
-    # ax3 = plt.subplot(223)
-    # ax4 = plt.subplot(224)
-
-    # player = table.players[0]
-    # ax1.bar(range(len(player.winnings_per_hand)), player.winnings_per_hand, label=player.name, color=['green' if x > 0 else 'red' for x in player.winnings_per_hand])
-    # ax1.set_xlabel('Hand Number')
-    # ax1.set_ylabel('Winnings/Losses')
-    # ax1.set_title('Winnings per Hand')
-
-    # for pos, player in enumerate(table.players):
-    #     ax2.plot(range(len(player.chips_per_hand)), player.chips_per_hand, marker='*', label=player.name)
-    #     ax2.legend()
-    #     ax2.set_xlabel('Hand Number')
-    #     ax2.set_ylabel('Chips Total')
-    #     ax2.set_title('Chip Total per Hand')
-
-    # for pos, hand in enumerate(resets):
-    #     if pos != 0:
-    #         hand = hand + np.sum( resets[:pos] )
-
-
-    #     ax2.plot([hand]*(CHIPS*2), range(CHIPS*2), color='k', ls='--')
-        
-
-    # ax3.hist(table.players[0].totals_per_hand, color='k')
-    # ax4.bar(['wins', 'losses'], [table.players[0].wins, table.players[0].losses], color=['black','red'])
-    # plt.show()
-
-
+    

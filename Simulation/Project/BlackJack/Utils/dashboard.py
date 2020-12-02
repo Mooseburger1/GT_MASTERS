@@ -8,6 +8,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly
+from plotly import tools
 import plotly.graph_objs as go
 import plotly.express as px
 from dash.dependencies import Input, Output
@@ -29,6 +30,7 @@ app.layout = html.Div([
         dcc.Tab(label='Chip Total Per Hand', value='tab-2'),
         dcc.Tab(label='Card Totals Distribution', value='tab-3'),
         dcc.Tab(label='Wins/Losses', value='tab-4'),
+        dcc.Tab(label='Max Winnings Per Trial', value='tab-5'),
     ]),
     html.Div(id='tabs-example-content')
 ])
@@ -66,10 +68,48 @@ class Dapp:
             return html.Div([
                 dcc.Graph(figure=self.create_wins_losses())
             ])
+        elif tab == 'tab-5':
+            return html.Div([
+                dcc.Graph(figure=self.create_maxes())
+            ])
 
     def launch_dashboard(self):
 
-        self.app.run_server(debug=True, port=port)
+        self.app.run_server(debug=False, port=port)
+
+    def create_maxes(self):
+        min_ = self.table.table_max
+        starting_chips = self.table.players[0].starting_chips
+        maxes = np.array(self.table.players[0].maxes) - starting_chips
+        trace = go.Histogram(
+            x=maxes,
+            opacity=0.75,
+            name='Max Chips Per Trial Distribution',
+            marker=dict(color=r'rgb(255,255,128)', line=dict(color='rgb(0,0,0)',width=1.5)),
+            text=r'(Total, Frequency)',
+            nbinsx=15
+        )
+
+        trace1 = go.Box(
+            x=sorted(maxes),
+            marker=dict(color=r'rgb(12,12,140)'),
+            name='Max Chips Per Trial Box'
+        )
+
+        layout = go.Layout(barmode='overlay',
+                   title='Maximum Chips Total Per Trial Distribution',
+                   xaxis=dict(title='Max Chips'),
+                   yaxis=dict( title='Frequency'),
+                   
+        )
+
+        fig = tools.make_subplots(rows=2, cols=1, shared_xaxes=False, shared_yaxes=False)
+        fig.append_trace(trace, 1,1)
+        #fig.update_xaxes(range=(-min_-100, max(maxes)+100))
+        fig.append_trace(trace1,2,1)
+        # fig = go.Figure(data=[trace,trace1], layout=layout)
+        
+        return fig
 
 
     def create_bargraph(self):
@@ -97,6 +137,13 @@ class Dapp:
         )
 
         fig = go.Figure(data=[trace], layout=layout)
+        fig.update_layout(
+            xaxis=dict(
+                rangeslider=dict(
+                    visible=True
+                )
+            )
+        )
         
         
         return fig
@@ -155,6 +202,13 @@ class Dapp:
 
         fig = self.plot_resets_and_chips(fig)
         fig.update_xaxes(range=(-5, length + 5))
+        fig.update_layout(
+            xaxis=dict(
+                rangeslider=dict(
+                    visible=True
+                )
+            )
+        )
         return fig
 
     def create_starting_chips_trace(self):

@@ -31,6 +31,7 @@ class Player:
         self.winnings_per_hand = []
         self.chips_per_hand = [chips]
         self.totals_per_hand = []
+        self.maxes = []
         self.wins = 0
         self.losses = 0
         
@@ -102,6 +103,11 @@ class Player:
     def pay(self, winnings):
         self.chips += winnings[0]
 
+    def record_max(self, lo, hi):
+        max_ = np.max(self.chips_per_hand[lo:hi])
+        print('MAX!!!!!!!!!!!!!!!!!!!!!!: ',max_)
+        self.maxes.append(max_)
+
 
 
 class player_name_generator:
@@ -163,6 +169,8 @@ class Cards:
     def _reset_deck(self):
         self.__init__(self.num_of_decks)
         return self._shuffle_deck()
+
+    
 
 
 class BlackJack:
