@@ -1,8 +1,8 @@
 # Set seed for reproducibility
-RANDOM_SEED: 42
+RANDOM_SEED: 22
 
 # Set the number of trials
-NUMBER_OF_TRIALS: 100
+NUMBER_OF_TRIALS: 500
 
 # Number of standard 52 card decks in the card shoe
 # 1 is minimum 8 is maximum
@@ -29,11 +29,11 @@ CHIPS: 10000
 
 # Triangular Betting Strategy
 #############################
-# BETTING:
-#  STRATEGY: TRIANGULAR
-#  LEFT: 0
-#  MED: 0.5
-#  RIGHT: 1.0
+BETTING:
+ STRATEGY: TRIANGULAR
+ LEFT: 0
+ MED: 0.8
+ RIGHT: 1.0
 
 # Always Bet Minimum Strategy
 #############################
@@ -52,10 +52,10 @@ CHIPS: 10000
 
 # Normal Betting Strategy
 #########################
-BETTING:
- STRATEGY: NORMAL
- MEAN: 0.5
- STD: 0.3
+# BETTING:
+#  STRATEGY: NORMAL
+#  MEAN: 0.5
+#  STD: 0.3
 
 # Exponential Betting Strategy
 ##############################
@@ -106,28 +106,28 @@ OTHER_PLAYERS:
     ONE:
         BETTING:
             STRATEGY: RANDOM
-        PLAYING_STRATEGY: RANDOM
-    TWO:
-        BETTING:
-            STRATEGY: RANDOM
-        PLAYING_STRATEGY: RANDOM
-    THREE:
-        BETTING:
-            STRATEGY: RANDOM
-        PLAYING_STRATEGY: RANDOM
-    FOUR:
-        BETTING:
-            STRATEGY: RANDOM
-        PLAYING_STRATEGY: RANDOM
-    FIVE:
-        BETTING:
-            STRATEGY: MINIMUM
-        PLAYING_STRATEGY: RANDOM
-    SIX:
-        BETTING:
-            STRATEGY: MINIMUM
-        PLAYING_STRATEGY: RANDOM
-    SEVEN:
-        BETTING:
-            STRATEGY: MINIMUM
-        PLAYING_STRATEGY: RANDOM
+        PLAYING_STRATEGY: 17+
+#     TWO:
+#         BETTING:
+#             STRATEGY: RANDOM
+#         PLAYING_STRATEGY: RANDOM
+#     THREE:
+#         BETTING:
+#             STRATEGY: RANDOM
+#         PLAYING_STRATEGY: RANDOM
+#     FOUR:
+#         BETTING:
+#             STRATEGY: RANDOM
+#         PLAYING_STRATEGY: RANDOM
+#     FIVE:
+#         BETTING:
+#             STRATEGY: MINIMUM
+#         PLAYING_STRATEGY: RANDOM
+#     SIX:
+#         BETTING:
+#             STRATEGY: MINIMUM
+#         PLAYING_STRATEGY: RANDOM
+#     SEVEN:
+#         BETTING:
+#             STRATEGY: MINIMUM
+#         PLAYING_STRATEGY: RANDOM

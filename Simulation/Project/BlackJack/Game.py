@@ -90,20 +90,35 @@ class Player:
             return -1
 
     def track_winnings(self, winnings: int, total: int):
+        '''
+        This method is utilized to keep track of winnings (and losses) per hand for future statistics
+        '''
         self.winnings_per_hand.append(winnings[0])
         self.chips_per_hand.append(self.chips)
         self.totals_per_hand.append(total)
 
     def add_loss(self):
+        '''
+        This is a helper method to keep track of total loss statistic
+        '''
         self.losses += 1
 
     def add_win(self):
+        '''
+        This is a helper method to keep track of total win statistic
+        '''
         self.wins += 1
 
     def pay(self, winnings):
+        '''
+        This is a helper method to pay the player their winnings per hand
+        '''
         self.chips += winnings[0]
 
     def record_max(self, lo, hi):
+        '''
+        This is a helper method to help keep track of the maximum chip total per trial
+        '''
         max_ = np.max(self.chips_per_hand[lo:hi])
         self.maxes.append(max_)
 

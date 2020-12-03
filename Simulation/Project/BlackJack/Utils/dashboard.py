@@ -126,7 +126,7 @@ class Dapp:
 
     def launch_dashboard(self):
 
-        self.app.run_server(debug=False, port=port)
+        self.app.run_server(debug=True, port=port)
 
     def create_maxes(self):
         min_ = self.table.table_max
@@ -323,8 +323,12 @@ class Dapp:
         positive = list(winnings[winnings > 0])
         negative = list(winnings[winnings < 0])
 
+        perc = round(len(positive) / ( len(positive) + len(negative) ), 4)
+
         win_med = np.median(positive)
+        win_std = round(np.std(positive),2)
         loss_med = np.median(negative)
+        loss_std = round(np.std(negative),2)
 
         color = [r'rgb(0,0,0)', r'rgb(255,0,0)']
         
@@ -368,7 +372,7 @@ class Dapp:
                             rows=2, cols=2,
                             specs=[[{}, {}],
                                 [{"colspan": 2}, None]],
-                            subplot_titles=("Winnings (Median: {})".format(win_med),"Losses (Median: {})".format(loss_med), "Total Win/Loss"))
+                            subplot_titles=("Winnings (Median: {} | Std: {})".format(win_med, win_std),"Losses (Median: {} | Std: {})".format(loss_med, loss_std), "Total Win/Loss | {}%".format(perc*100)))
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=1, col=2)
         fig.add_trace(trace, row=2, col=1)
