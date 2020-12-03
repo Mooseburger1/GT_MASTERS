@@ -43,7 +43,7 @@ class bet_uniform_random:
         
 
     def __repr__(self):
-        return 'Bet Uniform Random'
+        return 'Uniform Random'
 
     def bet(self):
         return np.max([self.table_min, round(np.random.uniform() * self.table_max, -1)])

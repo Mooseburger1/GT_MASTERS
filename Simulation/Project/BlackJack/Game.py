@@ -105,7 +105,6 @@ class Player:
 
     def record_max(self, lo, hi):
         max_ = np.max(self.chips_per_hand[lo:hi])
-        print('MAX!!!!!!!!!!!!!!!!!!!!!!: ',max_)
         self.maxes.append(max_)
 
 
