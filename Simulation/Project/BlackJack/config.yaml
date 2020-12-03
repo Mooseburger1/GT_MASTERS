@@ -26,8 +26,6 @@ NUMBER_OF_HANDS: 50
 # Number of chips to start with
 CHIPS: 10000
 
-# Position your player sits at the the table
-PLAYER_POSITION: 0
 
 # Triangular Betting Strategy
 #############################
@@ -57,7 +55,7 @@ PLAYER_POSITION: 0
 BETTING:
  STRATEGY: NORMAL
  MEAN: 0.5
- STD: 0.15
+ STD: 0.3
 
 # Exponential Betting Strategy
 ##############################
@@ -74,11 +72,11 @@ BETTING:
 
 # Stand on 16 or Higher
 ###############################
-PLAYING_STRATEGY: 17+
+# PLAYING_STRATEGY: 16+
 
 # Stand on 17 or Higher
 ###############################
-# PLAYING_STRATEGY: 17+
+PLAYING_STRATEGY: 17+
 
 # Stand on 18 or Higher
 ###############################
@@ -121,15 +119,15 @@ OTHER_PLAYERS:
         BETTING:
             STRATEGY: RANDOM
         PLAYING_STRATEGY: RANDOM
-    # FIVE:
-    #     BETTING:
-    #         STRATEGY: MINIMUM
-    #     PLAYING_STRATEGY: RANDOM
-    # SIX:
-    #     BETTING:
-    #         STRATEGY: MINIMUM
-    #     PLAYING_STRATEGY: RANDOM
-    # SIVEN:
-    #     BETTING:
-    #         STRATEGY: MINIMUM
-    #     PLAYING_STRATEGY: RANDOM
+    FIVE:
+        BETTING:
+            STRATEGY: MINIMUM
+        PLAYING_STRATEGY: RANDOM
+    SIX:
+        BETTING:
+            STRATEGY: MINIMUM
+        PLAYING_STRATEGY: RANDOM
+    SEVEN:
+        BETTING:
+            STRATEGY: MINIMUM
+        PLAYING_STRATEGY: RANDOM
