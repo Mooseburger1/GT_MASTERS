@@ -126,7 +126,7 @@ class Dapp:
 
     def launch_dashboard(self):
 
-        self.app.run_server(debug=True, port=port)
+        self.app.run_server(debug=False, port=port)
 
     def create_maxes(self):
         min_ = self.table.table_max
