@@ -2,7 +2,7 @@
 RANDOM_SEED: 22
 
 # Set the number of trials
-NUMBER_OF_TRIALS: 500
+NUMBER_OF_TRIALS: 100
 
 # Number of standard 52 card decks in the card shoe
 # 1 is minimum 8 is maximum
@@ -29,11 +29,11 @@ CHIPS: 10000
 
 # Triangular Betting Strategy
 #############################
-BETTING:
- STRATEGY: TRIANGULAR
- LEFT: 0
- MED: 0.8
- RIGHT: 1.0
+# BETTING:
+#  STRATEGY: TRIANGULAR
+#  LEFT: 0
+#  MED: 0.8
+#  RIGHT: 1.0
 
 # Always Bet Minimum Strategy
 #############################
@@ -42,8 +42,8 @@ BETTING:
 
 # Always Bet Maximum Strategy
 #############################
-# BETTING:
-#  STRATEGY: MAXIMUM
+BETTING:
+ STRATEGY: MAXIMUM
 
 # Bet Uniform Random
 ####################

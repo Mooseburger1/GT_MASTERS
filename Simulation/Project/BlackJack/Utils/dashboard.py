@@ -95,6 +95,7 @@ class Dapp:
                 html.Div([html.B(html.Em(html.P('PLAYER STRATEGIES shows the betting and playing strategies for every player sitting at the table. Your player will always be the first tile on the tab.')))])
             ])
         elif tab == 'tab-2':
+            
             return html.Div([
                 dcc.Graph(figure=self.create_chips_totals()),
                 html.Div([html.Hr(), html.B(html.Em(html.P('CHIP TOTAL PER HAND shows the chip count for each player after each hand. The trials are seperated by the black vertical lines. The horizontal dashed line represents the starting chip amount for each player. In instances that curves are above the dashed line, this means the player has positive winnings. Anytime it is below, this signifies a player has negative winnings (losing money). You can slide the ruler at the bottom to shift the graph to focus on specific trials. Double click on the slider to move as is, or move the individual thresholds. You can hide plotted curves by clicking a players name in the legend.')))])
@@ -112,8 +113,18 @@ class Dapp:
 
             ])
         elif tab == 'tab-5':
+            player = self.table.players[0]
+            fin_broke = player.finished_broke
+            fin_negative = player.finished_negative
+            fin_positive = player.finished_positive
+            tot = fin_broke + fin_negative + fin_positive
+
+            broke_perc = round((fin_broke / tot) , 2) * 100
+            neg_perc = round((fin_negative / tot) , 2) * 100
+            pos_perc = round((fin_positive / tot) , 2) * 100
             return html.Div([
                 dcc.Graph(figure=self.create_maxes()),
+                html.Div([html.P([html.H2('Went Broke: {} ({}%)  |  Finished Negative: {} ({}%)  |  Finished Positive: {} ({}%)'.format(fin_broke, broke_perc, fin_negative, neg_perc, fin_positive, pos_perc))])]),
                 html.Div([html.Hr(), html.B(html.Em(html.P('MAXIMUM WINNINGS PER TRIAL shows the distribution of the maximum amount of winnings achieved at any time during a trial, for all trials. This gives a user an idea of the overall maximum amount of winnings a person could walk away from the table with for the given betting and playing strategy.')))])
 
             ])

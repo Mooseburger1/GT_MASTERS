@@ -135,6 +135,18 @@ if __name__ == '__main__':
             
             #increase hand counter
             hands += 1
+
+        #track if finished broke
+        if table.players[0].broke:
+            table.players[0].finished_broke += 1
+
+        #track if finished negative
+        elif table.players[0].chips < CHIPS:
+            table.players[0].finished_negative += 1
+        
+        #track if finished positive
+        elif table.players[0].chips >= CHIPS:
+            table.players[0].finished_positive += 1
         
         #get hand range that this trial was executed over 
         if trial > 0:
@@ -154,10 +166,13 @@ if __name__ == '__main__':
         #track the highest chip total achieved this trial
         table.players[0].record_max(lo,hi)
 
+        
         #reset hands played for the next trial
         hands=0
 
-    
+    print('Finsihed Negative: ', table.players[0].finished_negative)
+    print('Finished Broke: ', table.players[0].finished_broke)
+    print('Finished Positive: ', table.players[0].finished_positive)
     # automatically open browser to the port the Dashboard will be served on
     Timer(1, open_browser).start()
     info = '''

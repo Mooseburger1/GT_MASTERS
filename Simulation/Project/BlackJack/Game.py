@@ -34,6 +34,9 @@ class Player:
         self.maxes = []
         self.wins = 0
         self.losses = 0
+        self.finished_negative = 0
+        self.finished_broke = 0
+        self.finished_positive = 0
         
         
     def __repr__(self):
